@@ -1,0 +1,267 @@
+import { badgeText, DONKI_NEW, DONKI_OLD } from '../data/loader';
+import { CONFIG } from '../sim/config';
+import type { Mission } from './App';
+import { Button, DataBadge, SourceLink, Term } from './components';
+import { CARD_SOURCES, FACTS, FACTS_CHECKED } from './copy';
+import credits from '../data/image-credits.json';
+
+type Fact = { label: string; value: string | number; unit: string; source_title: string; source_url: string; uncertainty?: number; note?: string; confirm_title?: string; confirm_url?: string };
+
+function FactCell({ f }: { f: Fact }) {
+  return (
+    <>
+      <strong>
+        {f.value}
+        {f.uncertainty ? ` ± ${f.uncertainty}` : ''} {f.unit === 'date' || f.unit === 'time' ? '' : f.unit}
+      </strong>
+      <br />
+      <span class="small">
+        <SourceLink href={f.source_url}>{f.source_title}</SourceLink>
+        {f.confirm_url && (
+          <>
+            {' '}· read in: <SourceLink href={f.confirm_url}>{f.confirm_title}</SourceLink>
+          </>
+        )}
+      </span>
+    </>
+  );
+}
+
+export function Sources({ mission, onBack }: { mission: Mission | null; onBack: () => void }) {
+  const F = FACTS as unknown as Record<string, Fact>;
+  const perSol = FACTS.mars_surface_dose_eq.value * 1.0275;
+
+  const scaled: { what: string; fact: Fact; game: string; why: string }[] = [
+    {
+      what: 'Everyday radiation on Mars',
+      fact: F.mars_surface_dose_eq,
+      game: `${CONFIG.baseDose} mSv per game sol`,
+      why: `One game sol stands for ${CONFIG.solScale} real sols, so 10 turns feel like a ${CONFIG.sols * CONFIG.solScale}-sol stay. ${FACTS.mars_surface_dose_eq.value} mSv/day × 1.0275 days per sol × ${CONFIG.solScale} = ${(perSol * CONFIG.solScale).toFixed(1)}, rounded to ${CONFIG.baseDose}.`,
+    },
+    {
+      what: 'Radiation limit',
+      fact: F.career_limit,
+      game: `${CONFIG.doseLimit} mSv for the mission`,
+      why: 'Same number. In real life this is the limit for an astronaut\'s whole career, not for one mission.',
+    },
+    {
+      what: 'Solar storm dose',
+      fact: F.may2024_mars_dose,
+      game: `${CONFIG.stormDose.minor} / ${CONFIG.stormDose.moderate} / ${CONFIG.stormDose.severe} mSv for a small / medium / big storm, × ${CONFIG.sepMultiplier} with a particle blast`,
+      why: 'Made much bigger for play. The biggest storm Curiosity has measured on the ground gave about 8 mGy, far less than the game\'s big storms. Mars\' air and the planet itself block a lot. Storms are a much bigger danger in open space on the way to Mars.',
+    },
+    {
+      what: 'Length of a day',
+      fact: F.sol_length,
+      game: '1 turn = 1 sol',
+      why: 'The game has no clock. A turn lasts as long as you need.',
+    },
+    {
+      what: 'Talking to Earth',
+      fact: { ...F.light_delay_max, value: `${FACTS.light_delay_min.value}–${FACTS.light_delay_max.value}`, label: 'One-way radio delay' },
+      game: 'Answers arrive the next sol',
+      why: 'The real delay is minutes, not a whole sol. The game stretches it so you can feel what “too late to help right now” means in a turn-based game.',
+    },
+    {
+      what: 'Dust storms and solar power',
+      fact: F.dust_2018_tau,
+      game: `Solar power drops from ${CONFIG.solarClear} to ${CONFIG.solarDust} cells for ${CONFIG.dustLength} sols`,
+      why: 'The real 2018 storm was far worse and lasted for months. It ended the solar-powered Opportunity rover\'s mission. The game keeps dust storms short so the mission can continue.',
+    },
+    {
+      what: 'Shielding',
+      fact: { label: 'no single real value', value: 'varies', unit: '', source_title: 'NASA: Mars solar storm article (cliffs and lava tubes could add shielding)', source_url: FACTS.may2024_mars_dose.source_url },
+      game: `Each cell blocks ${CONFIG.shieldPerCell * 100}%, up to ${CONFIG.shieldMaxCells} cells`,
+      why: 'A simple game rule. Real shielding depends on the material and how thick it is.',
+    },
+  ];
+
+  const unverified = Object.entries({ ...FACTS, ...CARD_SOURCES }).filter(([, f]) => !(f as { verified: boolean }).verified);
+
+  return (
+    <main class="page text-page">
+      <Button kind="ghost" onClick={onBack}>← Back</Button>
+      <h1>🔎 The Science Behind This</h1>
+      <p class="lead">
+        This game mixes <strong>real NASA data</strong> with <strong>simple game rules</strong>. This page shows which is
+        which, so you always know what is real.
+      </p>
+
+      <section class="panel">
+        <h2>For kids: what is real?</h2>
+        <ul>
+          <li>✅ <strong>Real:</strong> the <Term id="flare">solar flares</Term> in replay missions. Each one has a NASA record number.</li>
+          <li>✅ <strong>Real:</strong> the facts about Mars, radiation, dust storms and <Term id="commdelay">comm delay</Term>.</li>
+          <li>🎲 <strong>Game rules:</strong> power cells, the size of storm doses, and how well the shield works. Real life is more complicated!</li>
+          <li>🎲 <strong>Game events:</strong> dust storm timing, worn-out parts and harvests. The game always labels these.</li>
+          <li>💭 <strong>Imagined:</strong> most flares were seen from Earth's side of the Sun. The game <em>imagines</em> each one reaching Mars.</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>Data status right now</h2>
+        {mission ? (
+          <p>
+            Current mission: <strong>{mission.title}</strong> <DataBadge status={mission.status} />
+            {mission.status && (
+              <>
+                <br />
+                <span class="small">
+                  {badgeText(mission.status)}. Downloaded {mission.status.fetchedAt.slice(0, 10)} from: {mission.status.source}.
+                  {mission.status.partial && ' This saved copy is partial: it only has the flares the archive captured.'}
+                  {mission.status.reason && ` Live data was not used because: ${mission.status.reason}.`}
+                </span>
+              </>
+            )}
+          </p>
+        ) : (
+          <p>No mission started yet. Start one to see its data badge here.</p>
+        )}
+        <ul>
+          <li><strong>🟢 LIVE</strong> means the game downloaded Sun data from NASA a moment ago.</li>
+          <li><strong>📦 ARCHIVED DATA</strong> means a saved copy. Replay missions always use saved copies, so they work offline.</li>
+          <li><strong>🎲 GAME EVENTS</strong> means made-up storms (Random mission).</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>How a real flare becomes a game storm</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">NASA DONKI record</th><th scope="col">In the game</th><th scope="col">Dose with no shield</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Flare class <strong>C</strong></td><td>Small storm</td><td>{CONFIG.stormDose.minor} mSv</td></tr>
+              <tr><td>Flare class <strong>M</strong></td><td>Medium storm</td><td>{CONFIG.stormDose.moderate} mSv</td></tr>
+              <tr><td>Flare class <strong>X</strong></td><td>Big storm</td><td>{CONFIG.stormDose.severe} mSv</td></tr>
+              <tr><td>Linked, measured <strong>SEP</strong> event (solar energetic particles)</td><td>“Particle blast”: radiation spike</td><td>× {CONFIG.sepMultiplier}</td></tr>
+              <tr><td>Flare class A or B</td><td>Too small. Ignored</td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <ul>
+          <li>One Earth day of data becomes one game sol. If a day has several flares, the strongest one counts.</li>
+          <li>A particle event counts only if DONKI links it to that day's flare (directly or through the same eruption) and an instrument measured it. Model forecasts are ignored.</li>
+          <li>Sol 1 is always calm so new players can learn.</li>
+          <li>The seed slides the start day of a replay by up to 2 days, and places dust storms and small game events.</li>
+        </ul>
+        <p class="honesty">
+          <strong>Honesty note:</strong> DONKI flares are observed from near Earth. A flare aimed at Earth may miss Mars
+          completely. The game imagines the event reaching Mars. The replay windows were chosen because NASA spacecraft at
+          Mars really did measure storms then: in September 2017, Curiosity's surface radiation reading was{' '}
+          {FACTS.sep2017_mars.value} any earlier one (<SourceLink href={FACTS.sep2017_mars.source_url}>source</SourceLink>),
+          and in May 2024 Curiosity measured about {FACTS.may2024_mars_dose.value.toLocaleString()} micrograys from one
+          storm, like {FACTS.may2024_xrays.value} chest X-rays (<SourceLink href={FACTS.may2024_mars_dose.source_url}>source</SourceLink>).
+        </p>
+      </section>
+
+      <section class="panel">
+        <h2>Real value vs. game value</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">What</th><th scope="col">Real value and source</th><th scope="col">In the game</th><th scope="col">Why they differ</th></tr>
+            </thead>
+            <tbody>
+              {scaled.map((s) => (
+                <tr key={s.what}>
+                  <th scope="row">{s.what}</th>
+                  <td><FactCell f={s.fact} /></td>
+                  <td>{s.game}</td>
+                  <td>{s.why}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Every dataset used</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Dataset</th><th scope="col">What it drives</th><th scope="col">Live or archived</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><SourceLink href="https://ccmc.gsfc.nasa.gov/tools/DONKI/">NASA CCMC DONKI</SourceLink> (flares FLR, particle events SEP)</td>
+                <td>Solar storms in Real Storm Replay and Today's Sun</td>
+                <td>Replay: archived snapshots in <code>public/data/donki/</code>. Today's Sun: live from <code>{DONKI_NEW}</code>, then <code>{DONKI_OLD}</code>, then the newest snapshot.</td>
+              </tr>
+              <tr>
+                <td>Curiosity RAD (<SourceLink href={FACTS.mars_surface_dose_eq.source_url}>Hassler et al. 2014</SourceLink>; <SourceLink href={FACTS.cruise_dose_eq.source_url}>Zeitlin et al. 2013</SourceLink>)</td>
+                <td>Everyday radiation dose; cruise comparison</td>
+                <td>Fixed facts, checked {FACTS_CHECKED}</td>
+              </tr>
+              <tr>
+                <td><SourceLink href={FACTS.iss_absorbed.source_url}>NASA OSDR RadLab</SourceLink></td>
+                <td>“Mars vs. the Space Station” card</td>
+                <td>Fixed fact, computed from RadLab data on {FACTS_CHECKED}</td>
+              </tr>
+              <tr>
+                <td>NASA OSDR studies {Object.values(CARD_SOURCES).filter((c) => c.study_id.startsWith('OSD')).map((c, i) => (
+                  <span key={c.study_id}>{i > 0 && ', '}<SourceLink href={c.source_url}>{c.study_id}</SourceLink></span>
+                ))}</td>
+                <td>Real NASA Science cards (bones, muscles, body clock, radiation)</td>
+                <td>Fixed, curated</td>
+              </tr>
+              <tr>
+                <td><SourceLink href={CARD_SOURCES.food.source_url}>Canadian Space Agency food production toolkit</SourceLink></td>
+                <td>Greenhouse card</td>
+                <td>Fixed, curated</td>
+              </tr>
+              <tr>
+                <td><SourceLink href={FACTS.career_limit.source_url}>NASA-STD-3001 radiation limit</SourceLink></td>
+                <td>The {CONFIG.doseLimit} mSv mission limit</td>
+                <td>Fixed fact</td>
+              </tr>
+              <tr>
+                <td>NASA / JPL news on <SourceLink href={FACTS.opportunity_end.source_url}>Opportunity</SourceLink> and the <SourceLink href={FACTS.dust_2018_tau.source_url}>2018 dust storm</SourceLink></td>
+                <td>Dust storm event and its true story</td>
+                <td>Fixed facts</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>All facts and where they come from</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Fact</th><th scope="col">Value and source</th><th scope="col">Checked?</th></tr>
+            </thead>
+            <tbody>
+              {Object.entries(F).map(([key, f]) => (
+                <tr key={key}>
+                  <th scope="row">{f.label}{f.note && <><br /><span class="small">{f.note}</span></>}</th>
+                  <td><FactCell f={f} /></td>
+                  <td>{(f as unknown as { verified: boolean }).verified ? '✓ Verified' : '✗ Not verified'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p>
+          <strong>Unverified values:</strong>{' '}
+          {unverified.length === 0 ? 'none. Every value above was read in its source.' : unverified.map(([k]) => k).join(', ')}
+        </p>
+      </section>
+
+      <section class="panel">
+        <h2>Pictures</h2>
+        <ul>
+          {credits.map((c) => (
+            <li key={c.file}>
+              {c.title}. Credit: {c.credit}. <SourceLink href={c.source_url}>Source</SourceLink>
+            </li>
+          ))}
+        </ul>
+        <p class="small">The Mars Rover Photos API is not used (it is archived). Pictures are stored with the game.</p>
+      </section>
+    </main>
+  );
+}

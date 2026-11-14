@@ -1,0 +1,235 @@
+{
+  "window": {
+    "id": "sep2017",
+    "title": "September 2017 solar storms",
+    "kind": "replay",
+    "start": "2017-09-03",
+    "end": "2017-09-14",
+    "marsObserved": true,
+    "blurb": "Big flares in September 2017. NASA spacecraft at Mars measured this storm too."
+  },
+  "fetched_at": "2026-11-14T07:51:05.863Z",
+  "source": "Internet Archive captures of DONKI event pages (kauai.ccmc.gsfc.nasa.gov/DONKI/view)",
+  "partial": true,
+  "note": "The DONKI API was unreachable when this was built, so these records were read from archived copies of DONKI's own event pages. Only flares and particle events that the archive captured are included.",
+  "FLR": [
+    {
+      "flrID": "2017-09-04T20:15:00-FLR-001",
+      "beginTime": "2017-09-04T20:15Z",
+      "peakTime": "2017-09-04T20:33Z",
+      "endTime": "2017-09-04T20:37Z",
+      "classType": "M5.5",
+      "sourceLocation": "S10W14",
+      "activeRegionNum": 12673,
+      "linkedEvents": [
+        {
+          "activityID": "2017-09-04T20:36:00-CME-001"
+        },
+        {
+          "activityID": "2017-09-04T22:56:00-SEP-001"
+        },
+        {
+          "activityID": "2017-09-04T23:52:00-SEP-001"
+        },
+        {
+          "activityID": "2017-09-05T00:30:00-SEP-001"
+        },
+        {
+          "activityID": "2017-09-06T23:45:00-SEP-001"
+        }
+      ],
+      "link": "https://web.archive.org/web/20250601112407/https://kauai.ccmc.gsfc.nasa.gov/DONKI/view/FLR/12979/4",
+      "archived_at": "2025-06-01T11:24Z"
+    },
+    {
+      "flrID": "2017-09-06T11:53:00-FLR-001",
+      "beginTime": "2017-09-06T11:53Z",
+      "peakTime": "2017-09-06T12:02Z",
+      "endTime": "2017-09-06T12:10Z",
+      "classType": "X9.3",
+      "sourceLocation": "S07W33",
+      "activeRegionNum": 12673,
+      "linkedEvents": [
+        {
+          "activityID": "2017-09-06T12:24:00-CME-001"
+        },
+        {
+          "activityID": "2017-09-06T23:30:00-SEP-001"
+        }
+      ],
+      "link": "https://web.archive.org/web/20210323191010/https://kauai.ccmc.gsfc.nasa.gov/DONKI/view/FLR/13010/4",
+      "archived_at": "2021-03-23T19:10Z"
+    },
+    {
+      "flrID": "2017-09-10T15:35:00-FLR-001",
+      "beginTime": "2017-09-10T15:35Z",
+      "peakTime": "2017-09-10T16:06Z",
+      "endTime": "2017-09-10T16:31Z",
+      "classType": "X8.2",
+      "sourceLocation": "S08W88",
+      "activeRegionNum": 12673,
+      "linkedEvents": [
+        {
+          "activityID": "2017-09-10T16:09:00-CME-001"
+        },
+        {
+          "activityID": "2017-09-10T16:25:00-SEP-001"
+        },
+        {
+          "activityID": "2017-09-10T16:45:00-SEP-001"
+        },
+        {
+          "activityID": "2017-09-10T20:00:00-SEP-001"
+        }
+      ],
+      "link": "https://web.archive.org/web/20241216180244/https://kauai.ccmc.gsfc.nasa.gov/DONKI/view/FLR/13098/4",
+      "archived_at": "2024-12-16T18:02Z"
+    }
+  ],
+  "SEP": [
+    {
+      "sepID": "2017-09-04T22:56:00-SEP-001",
+      "eventTime": "2017-09-04T22:56Z",
+      "instrument": "MODEL: REleASE:SOHO/EPHIN 15.8-39.8 MeV",
+      "linkedEvents": [
+        {
+          "activityID": "2017-09-04T20:15:00-FLR-001"
+        },
+        {
+          "activityID": "2017-09-04T20:36:00-CME-001"
+        }
+      ],
+      "link": "https://web.archive.org/web/20250606041318/https://kauai.ccmc.gsfc.nasa.gov/DONKI/view/SEP/13004/1",
+      "archived_at": "2025-06-06T04:13Z"
+    },
+    {
+      "sepID": "2017-09-04T23:52:00-SEP-001",
+      "eventTime": "2017-09-04T23:52Z",
+      "instrument": "SOHO: COSTEP 15.8-39.8 MeV",
+      "linkedEvents": [
+        {
+          "activityID": "2017-09-04T20:15:00-FLR-001"
+        },
+        {
+          "activityID": "2017-09-04T20:36:00-CME-001"
+        }
+      ],
+      "link": "https://web.archive.org/web/20250606041320/https://kauai.ccmc.gsfc.nasa.gov/DONKI/view/SEP/13000/1",
+      "archived_at": "2025-06-06T04:13Z"
+    },
+    {
+      "sepID": "2017-09-05T00:30:00-SEP-001",
+      "eventTime": "2017-09-05T00:30Z",
+      "instrument": "GOES13: SEM/EPS >10 MeV",
+      "linkedEvents": [
+        {
+          "activityID": "2017-09-04T20:15:00-FLR-001"
+        },
+        {
+          "activityID": "2017-09-04T20:36:00-CME-001"
+        }
+      ],
+      "link": "https://web.archive.org/web/20241207164947/https://kauai.ccmc.gsfc.nasa.gov/DONKI/view/SEP/12984/2",
+      "archived_at": "2024-12-07T16:49Z"
+    },
+    {
+      "sepID": "2017-09-06T23:30:00-SEP-001",
+      "eventTime": "2017-09-06T23:30Z",
+      "instrument": "SOHO: COSTEP 15.8-39.8 MeV",
+      "linkedEvents": [
+        {
+          "activityID": "2017-09-06T11:53:00-FLR-001"
+        },
+        {
+          "activityID": "2017-09-06T12:24:00-CME-001"
+        }
+      ],
+      "link": "https://web.archive.org/web/20210325080712/https://kauai.ccmc.gsfc.nasa.gov/DONKI/view/SEP/13081/1",
+      "archived_at": "2021-03-25T08:07Z"
+    },
+    {
+      "sepID": "2017-09-06T23:45:00-SEP-001",
+      "eventTime": "2017-09-06T23:45Z",
+      "instrument": "GOES13: SEM/EPS >10 MeV",
+      "linkedEvents": [
+        {
+          "activityID": "2017-09-04T19:39:00-CME-001"
+        },
+        {
+          "activityID": "2017-09-04T20:15:00-FLR-001"
+        },
+        {
+          "activityID": "2017-09-04T20:36:00-CME-001"
+        },
+        {
+          "activityID": "2017-09-06T23:08:00-IPS-001"
+        }
+      ],
+      "link": "https://web.archive.org/web/20250606041322/https://kauai.ccmc.gsfc.nasa.gov/DONKI/view/SEP/13036/2",
+      "archived_at": "2025-06-06T04:13Z"
+    },
+    {
+      "sepID": "2017-09-10T16:25:00-SEP-001",
+      "eventTime": "2017-09-10T16:25Z",
+      "instrument": "GOES13: SEM/EPS >100 MeV",
+      "linkedEvents": [
+        {
+          "activityID": "2017-09-10T15:35:00-FLR-001"
+        },
+        {
+          "activityID": "2017-09-10T16:09:00-CME-001"
+        }
+      ],
+      "link": "https://web.archive.org/web/20241212040608/https://kauai.ccmc.gsfc.nasa.gov/DONKI/view/SEP/13101/1",
+      "archived_at": "2024-12-12T04:06Z"
+    },
+    {
+      "sepID": "2017-09-10T16:45:00-SEP-001",
+      "eventTime": "2017-09-10T16:45Z",
+      "instrument": "GOES13: SEM/EPS >10 MeV",
+      "linkedEvents": [
+        {
+          "activityID": "2017-09-10T15:35:00-FLR-001"
+        },
+        {
+          "activityID": "2017-09-10T16:09:00-CME-001"
+        }
+      ],
+      "link": "https://web.archive.org/web/20250603170752/https://kauai.ccmc.gsfc.nasa.gov/DONKI/view/SEP/13104/1",
+      "archived_at": "2025-06-03T17:07Z"
+    },
+    {
+      "sepID": "2017-09-10T20:00:00-SEP-001",
+      "eventTime": "2017-09-10T20:00Z",
+      "instrument": "SOHO: COSTEP 15.8-39.8 MeV",
+      "linkedEvents": [
+        {
+          "activityID": "2017-09-10T15:35:00-FLR-001"
+        },
+        {
+          "activityID": "2017-09-10T16:09:00-CME-001"
+        }
+      ],
+      "link": "https://web.archive.org/web/20250603170754/https://kauai.ccmc.gsfc.nasa.gov/DONKI/view/SEP/13112/1",
+      "archived_at": "2025-06-03T17:07Z"
+    },
+    {
+      "sepID": "2017-09-13T05:33:00-SEP-001",
+      "eventTime": "2017-09-13T05:33Z",
+      "instrument": "STEREO A: IMPACT 13-100 MeV",
+      "linkedEvents": [
+        {
+          "activityID": "2017-09-10T16:09:00-CME-001"
+        },
+        {
+          "activityID": "2017-09-12T07:23:00-FLR-001"
+        },
+        {
+          "activityID": "2017-09-12T19:03:00-FLR-001"
+        }
+      ],
+      "link": "https://web.archive.org/web/20250603170820/https://kauai.ccmc.gsfc.nasa.gov/DONKI/view/SEP/13134/1",
+      "archived_at": "2025-06-03T17:08Z"
+    }
+  ]
+}

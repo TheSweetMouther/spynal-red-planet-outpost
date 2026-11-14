@@ -1,0 +1,16 @@
+[
+  {
+    "file": "data/images/curiosity-glen-etive.jpg",
+    "title": "Curiosity at 'Glen Etive' (selfie taken on Mars, 11 Oct 2019)",
+    "credit": "NASA/JPL-Caltech/MSSS",
+    "nasa_id": "PIA23378",
+    "source_url": "https://images.nasa.gov/details/PIA23378"
+  },
+  {
+    "file": "data/images/opportunity-dark-sky.jpg",
+    "title": "Shades of Martian Darkness (simulated views of the Sun from Opportunity as the 2018 dust storm grew)",
+    "credit": "NASA/JPL-Caltech/TAMU",
+    "nasa_id": "PIA22521",
+    "source_url": "https://images.nasa.gov/details/PIA22521"
+  }
+]

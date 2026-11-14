@@ -1,0 +1,215 @@
+{
+  "_about": "Every real-world number shown to players comes from this file. 'verified' means the value was read in the listed source on the 'checked' date. Game-scaled values live in src/sim/config.ts and are explained on the Sources page.",
+  "checked": "2026-11-14",
+  "facts": {
+    "sol_length": {
+      "label": "Length of one sol (a Mars day)",
+      "value": "24 h 39 min 35.244 s",
+      "display": "24 hours 39 minutes",
+      "unit": "time",
+      "source_title": "NASA GISS — Technical Notes on Mars Solar Time as Adopted by the Mars24 Sunclock",
+      "source_url": "https://www.giss.nasa.gov/tools/mars24/help/notes.html",
+      "verified": true
+    },
+    "light_delay_min": {
+      "label": "Shortest one-way radio delay, Mars to Earth",
+      "value": 4,
+      "unit": "minutes",
+      "source_title": "NASA — Space Communications: 7 Things You Need to Know",
+      "source_url": "https://www.nasa.gov/missions/tech-demonstration/space-communications-7-things-you-need-to-know",
+      "note": "At closest approach, about 35 million miles.",
+      "verified": true
+    },
+    "light_delay_max": {
+      "label": "Longest one-way radio delay, Mars to Earth",
+      "value": 24,
+      "unit": "minutes",
+      "source_title": "NASA — Space Communications: 7 Things You Need to Know",
+      "source_url": "https://www.nasa.gov/missions/tech-demonstration/space-communications-7-things-you-need-to-know",
+      "note": "At greatest distance, about 250 million miles.",
+      "verified": true
+    },
+    "mars_surface_dose_eq": {
+      "label": "Radiation on the Mars surface (Curiosity RAD)",
+      "value": 0.64,
+      "uncertainty": 0.12,
+      "unit": "mSv per day",
+      "source_title": "Hassler et al. 2014, Science 343, 1244797 — Mars' Surface Radiation Environment Measured with MSL's Curiosity Rover",
+      "source_url": "https://doi.org/10.1126/science.1244797",
+      "confirm_title": "Zeitlin, Hassler et al. 2014 — New Results from the MSL-RAD Experiment on Curiosity (8th Int. Conf. on Mars, abstract 1151)",
+      "confirm_url": "https://www.hou.usra.edu/meetings/8thmars2014/pdf/1151.pdf",
+      "note": "Measured Aug 2012 – Jun 2013. The Science paper is paywalled; the value was read in the RAD team's open conference abstract.",
+      "verified": true
+    },
+    "mars_surface_absorbed": {
+      "label": "Absorbed dose rate on the Mars surface (Curiosity RAD)",
+      "value": 0.21,
+      "uncertainty": 0.04,
+      "unit": "mGy per day",
+      "source_title": "Hassler et al. 2014, Science 343, 1244797",
+      "source_url": "https://doi.org/10.1126/science.1244797",
+      "confirm_title": "Zeitlin, Hassler et al. 2014 — New Results from the MSL-RAD Experiment (plot shows 180–240 µGy/day over the first 300 sols)",
+      "confirm_url": "https://www.hou.usra.edu/meetings/8thmars2014/pdf/1151.pdf",
+      "verified": true
+    },
+    "cruise_dose_eq": {
+      "label": "Radiation inside the spacecraft on the trip to Mars (Curiosity RAD)",
+      "value": 1.84,
+      "uncertainty": 0.3,
+      "unit": "mSv per day",
+      "source_title": "Zeitlin et al. 2013, Science 340, 1080 — Measurements of Energetic Particle Radiation in Transit to Mars on the Mars Science Laboratory",
+      "source_url": "https://doi.org/10.1126/science.1235989",
+      "confirm_title": "Zeitlin, Hassler et al. 2014 — New Results from the MSL-RAD Experiment on Curiosity",
+      "confirm_url": "https://www.hou.usra.edu/meetings/8thmars2014/pdf/1151.pdf",
+      "verified": true
+    },
+    "iss_absorbed": {
+      "label": "Absorbed dose rate inside the Space Station (Columbus module)",
+      "value": "0.26–0.29",
+      "value_low": 0.26,
+      "value_high": 0.29,
+      "unit": "mGy per day",
+      "source_title": "NASA OSDR RadLab — DosTel1 and DosTel2 readings, ISS Columbus, 1–7 April 2022",
+      "source_url": "https://visualization.osdr.nasa.gov/radlab/gui/overview/",
+      "query_url": "https://visualization.osdr.nasa.gov/radlab/api/?spacecraft=ISS&instrument=DosTel&timestamp>=2022-04-01T00:00&timestamp<2022-04-08T00:00&absorbed_dose_rate&format=csv",
+      "note": "Computed for this project: time-weighted mean of 16,699 readings (DosTel2 10.69 µGy/h = 256 µGy/day; DosTel1 12.18 µGy/h = 292 µGy/day). One quiet week; the rate changes with altitude and the solar cycle.",
+      "verified": true
+    },
+    "career_limit": {
+      "label": "NASA career radiation limit for astronauts",
+      "value": 600,
+      "unit": "mSv",
+      "source_title": "NASA OCHMO Technical Brief: Radiation Protection (NASA-STD-3001)",
+      "source_url": "https://www.nasa.gov/wp-content/uploads/2023/03/radiation-protection-technical-brief-ochmo.pdf",
+      "note": "\"Total career effective radiation dose due to space flight radiation exposure shall be less than 600 mSv.\"",
+      "verified": true
+    },
+    "opportunity_last_contact": {
+      "label": "Opportunity rover's last message to Earth",
+      "value": "June 10, 2018",
+      "unit": "date",
+      "source_title": "NASA — NASA's Record-Setting Opportunity Rover Mission on Mars Comes to End",
+      "source_url": "https://www.nasa.gov/press-release/nasas-record-setting-opportunity-rover-mission-on-mars-comes-to-end",
+      "verified": true
+    },
+    "opportunity_end": {
+      "label": "Opportunity mission declared complete",
+      "value": "February 13, 2019",
+      "unit": "date",
+      "source_title": "NASA — NASA's Record-Setting Opportunity Rover Mission on Mars Comes to End",
+      "source_url": "https://www.nasa.gov/press-release/nasas-record-setting-opportunity-rover-mission-on-mars-comes-to-end",
+      "note": "More than 1,000 recovery commands were sent. The rover was designed for 90 sols and drove more than 45 km.",
+      "verified": true
+    },
+    "opportunity_design_sols": {
+      "label": "Opportunity's planned mission length",
+      "value": 90,
+      "unit": "sols",
+      "source_title": "NASA — NASA's Record-Setting Opportunity Rover Mission on Mars Comes to End",
+      "source_url": "https://www.nasa.gov/press-release/nasas-record-setting-opportunity-rover-mission-on-mars-comes-to-end",
+      "verified": true
+    },
+    "dust_2018_tau": {
+      "label": "Sky dustiness (tau) over Opportunity on June 10, 2018",
+      "value": 10.8,
+      "unit": "tau (opacity)",
+      "source_title": "NASA JPL — Opportunity Hunkers Down During Dust Storm",
+      "source_url": "https://www.jpl.nasa.gov/news/opportunity-hunkers-down-during-dust-storm/",
+      "note": "The 2007 storm Opportunity survived had a tau somewhere above 5.5.",
+      "verified": true
+    },
+    "dust_2018_area": {
+      "label": "Area covered by the 2018 dust storm on June 12, 2018",
+      "value": 35,
+      "unit": "million square km",
+      "source_title": "NASA JPL — Opportunity Hunkers Down During Dust Storm",
+      "source_url": "https://www.jpl.nasa.gov/news/opportunity-hunkers-down-during-dust-storm/",
+      "verified": true
+    },
+    "sep2017_mars": {
+      "label": "September 2017 solar storm at Mars",
+      "value": "more than double",
+      "unit": "surface radiation vs. any earlier RAD reading",
+      "source_title": "SwRI / NASA — Large Solar Storm Sparks Global Aurora, Doubles Radiation Levels on the Martian Surface",
+      "source_url": "https://www.swri.org/newsroom/press-releases/large-solar-storm-sparks-global-aurora-doubles-radiation-levels-mars",
+      "note": "Solar event of Sept 11, 2017. High readings lasted more than two days. MAVEN saw an aurora more than 25 times brighter than any it had seen before.",
+      "verified": true
+    },
+    "may2024_mars_dose": {
+      "label": "May 20, 2024 solar storm dose next to Curiosity",
+      "value": 8100,
+      "unit": "micrograys",
+      "source_title": "NASA — NASA Watches Mars Light Up During Epic Solar Storm",
+      "source_url": "https://www.nasa.gov/missions/maven/nasa-watches-mars-light-up-during-epic-solar-storm/",
+      "note": "Flare later estimated at X12. \"Equivalent to 30 chest X-rays\" and the biggest surge RAD had measured since landing.",
+      "verified": true
+    },
+    "may2024_xrays": {
+      "label": "May 20, 2024 storm dose compared with chest X-rays",
+      "value": 30,
+      "unit": "chest X-rays",
+      "source_title": "NASA — NASA Watches Mars Light Up During Epic Solar Storm",
+      "source_url": "https://www.nasa.gov/missions/maven/nasa-watches-mars-light-up-during-epic-solar-storm/",
+      "verified": true
+    },
+    "round_trip_cruise": {
+      "label": "Radiation for the shortest round trip to Mars (travel only)",
+      "value": 0.66,
+      "uncertainty": 0.12,
+      "unit": "Sv",
+      "source_title": "Zeitlin et al. 2013, Science 340, 1080",
+      "source_url": "https://doi.org/10.1126/science.1235989",
+      "verified": true
+    }
+  },
+  "cards": {
+    "bone": {
+      "topic": "Bones",
+      "study_id": "OSD-342",
+      "study_title": "Targeting myostatin/activin A protects against skeletal muscle and bone loss during spaceflight",
+      "source_title": "NASA Open Science Data Repository, OSD-342",
+      "source_url": "https://osdr.nasa.gov/bio/repo/data/studies/OSD-342",
+      "verified": true
+    },
+    "muscle": {
+      "topic": "Muscles",
+      "study_id": "OSD-195",
+      "study_title": "Effects of 21 days of bedrest on human skeletal muscle gene expression",
+      "source_title": "NASA Open Science Data Repository, OSD-195",
+      "source_url": "https://osdr.nasa.gov/bio/repo/data/studies/OSD-195",
+      "verified": true
+    },
+    "sleep": {
+      "topic": "Body clock and sleep",
+      "study_id": "OSD-343",
+      "study_title": "Comprehensive multi-omics analysis reveals mitochondrial stress as a central biological hub for spaceflight impact",
+      "source_title": "NASA Open Science Data Repository, OSD-343",
+      "source_url": "https://osdr.nasa.gov/bio/repo/data/studies/OSD-343",
+      "verified": true
+    },
+    "radiation": {
+      "topic": "Radiation and cells",
+      "study_id": "OSD-73",
+      "study_title": "Transcriptome Profiles in Normal Human Bronchial Epithelial Cells after Exposure to gamma-rays and different HZE particles",
+      "source_title": "NASA Open Science Data Repository, OSD-73",
+      "source_url": "https://osdr.nasa.gov/bio/repo/data/studies/OSD-73",
+      "verified": true
+    },
+    "iss_compare": {
+      "topic": "Mars vs. the Space Station",
+      "study_id": "RadLab",
+      "study_title": "RadLab radiation telemetry portal",
+      "source_title": "NASA OSDR RadLab",
+      "source_url": "https://visualization.osdr.nasa.gov/radlab/gui/overview/",
+      "verified": true
+    },
+    "food": {
+      "topic": "Growing food in space",
+      "study_id": "CSA toolkit",
+      "study_title": "Toolkit for educators and youth – Food production on the Moon and in remote areas",
+      "source_title": "Canadian Space Agency",
+      "source_url": "https://www.asc-csa.gc.ca/eng/youth-educators/toolkits/food-production/",
+      "verified": true
+    }
+  }
+}
