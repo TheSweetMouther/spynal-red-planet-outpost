@@ -160,6 +160,15 @@
       "source_title": "Zeitlin et al. 2013, Science 340, 1080",
       "source_url": "https://doi.org/10.1126/science.1235989",
       "verified": true
+    },
+    "mars_sunset_blue": {
+      "label": "Color of the sky around the Sun at sunset on Mars",
+      "value": "blue",
+      "unit": "color",
+      "note": "Fine dust lets blue light through more easily, so blue stays close to the Sun's part of the sky. Photographed by Curiosity on sol 956 (April 15, 2015).",
+      "source_title": "NASA Science — Sunset in Mars' Gale Crater",
+      "source_url": "https://science.nasa.gov/resource/sunset-in-mars-gale-crater/",
+      "verified": true
     }
   },
   "cards": {

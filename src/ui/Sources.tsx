@@ -5,6 +5,7 @@ import { CONFIG } from '../sim/config';
 import { SCALE_NOTE, STORM_HONESTY } from '../sim/debrief';
 import type { Mission } from './App';
 import { Button, DataBadge, SourceLink, Term } from './components';
+import { Icon } from './icons';
 import { CARD_SOURCES, FACTS, FACTS_CHECKED } from './copy';
 import credits from '../data/image-credits.json';
 
@@ -32,19 +33,19 @@ function FactCell({ f }: { f: Fact }) {
 
 /** The "Complete?" cell: what was downloaded from the API and what is still missing. */
 function Completeness({ s }: { s: SnapshotIndexEntry }) {
-  if (!s.partial && s.flare_source === 'FLR') return <>✅ Complete: flares and particle events downloaded from the DONKI API.</>;
+  if (!s.partial && s.flare_source === 'FLR') return <><Icon name="ok" class="tone-blue" /> Complete: flares and particle events downloaded from the DONKI API.</>;
   if (s.flare_source === 'notifications')
     return (
       <>
-        ✅ <strong>Particle events:</strong> complete download from the DONKI API.
+        <Icon name="ok" class="tone-blue" /> <strong>Particle events:</strong> complete download from the DONKI API.
         <br />
-        ⚠️ <strong>Flares: partial.</strong> DONKI's flare list (FLR) answered “{s.flr_problem ?? 'error'}” on the download day, so
+        <Icon name="warning" class="tone-alarm" /> <strong>Flares: partial.</strong> DONKI's flare list (FLR) answered “{s.flr_problem ?? 'error'}” on the download day, so
         flares come from DONKI's own flare notifications, which cover every flare of class {NOTIFICATION_THRESHOLD} and bigger
         {s.flares_from_archive ? `, plus ${s.flares_from_archive} records read from Internet Archive copies of DONKI pages` : ''}.
         Flares smaller than {NOTIFICATION_THRESHOLD} may be missing.
       </>
     );
-  return <>⚠️ Partial: built from Internet Archive copies of DONKI pages because the DONKI API could not be reached. Some real flares are missing.</>;
+  return <><Icon name="warning" class="tone-alarm" /> Partial: built from Internet Archive copies of DONKI pages because the DONKI API could not be reached. Some real flares are missing.</>;
 }
 
 export function Sources({ mission, onBack }: { mission: Mission | null; onBack: () => void }) {
@@ -124,8 +125,8 @@ export function Sources({ mission, onBack }: { mission: Mission | null; onBack: 
 
   return (
     <main class="page text-page">
-      <Button kind="ghost" onClick={onBack}>← Back</Button>
-      <h1>🔎 The Science Behind This</h1>
+      <Button kind="ghost" icon="back" onClick={onBack}>Back</Button>
+      <h1><Icon name="search" class="tone-blue" /> The Science Behind This</h1>
       <p class="lead">
         This game mixes <strong>real NASA data</strong> with <strong>simple game rules</strong>. This page shows which is
         which, so you always know what is real.
@@ -134,12 +135,12 @@ export function Sources({ mission, onBack }: { mission: Mission | null; onBack: 
       <section class="panel">
         <h2>For kids: what is real?</h2>
         <ul>
-          <li>✅ <strong>Real:</strong> the <Term id="flare">solar flares</Term> in replay missions. Each one has a NASA record number.</li>
-          <li>✅ <strong>Real:</strong> the facts about Mars, radiation, dust storms and <Term id="commdelay">comm delay</Term>.</li>
-          <li>🎲 <strong>Game rules:</strong> power cells, the size of storm doses, how well the shield works, and the dust storm warning. Real life is more complicated!</li>
-          <li>🔢 <strong>Bigger numbers:</strong> {SCALE_NOTE} Real life: about {FACTS.mars_surface_dose_eq.value} mSv per day on Mars. In the game: {CONFIG.baseDose} mSv per sol.</li>
-          <li>🎲 <strong>Game events:</strong> dust storm timing, worn-out parts and harvests. The game always labels these.</li>
-          <li>💭 <strong>Imagined:</strong> most flares were seen from Earth's side of the Sun. The game <em>imagines</em> each one reaching Mars.</li>
+          <li><Icon name="ok" class="tone-blue" /> <strong>Real:</strong> the <Term id="flare">solar flares</Term> in replay missions. Each one has a NASA record number.</li>
+          <li><Icon name="ok" class="tone-blue" /> <strong>Real:</strong> the facts about Mars, radiation, dust storms and <Term id="commdelay">comm delay</Term>.</li>
+          <li><Icon name="game" /> <strong>Game rules:</strong> power cells, the size of storm doses, how well the shield works, and the dust storm warning. Real life is more complicated!</li>
+          <li><Icon name="data" /> <strong>Bigger numbers:</strong> {SCALE_NOTE} Real life: about {FACTS.mars_surface_dose_eq.value} mSv per day on Mars. In the game: {CONFIG.baseDose} mSv per sol.</li>
+          <li><Icon name="game" /> <strong>Game events:</strong> dust storm timing, worn-out parts and harvests. The game always labels these.</li>
+          <li><Icon name="idea" /> <strong>Imagined:</strong> most flares were seen from Earth's side of the Sun. The game <em>imagines</em> each one reaching Mars.</li>
         </ul>
       </section>
 
@@ -189,9 +190,9 @@ export function Sources({ mission, onBack }: { mission: Mission | null; onBack: 
           </table>
         </div>
         <ul>
-          <li><strong>🟢 LIVE</strong> means the game downloaded Sun data from NASA a moment ago.</li>
-          <li><strong>📦 ARCHIVED DATA</strong> means a saved copy. Replay missions always use saved copies, so they work offline. If Today's Sun cannot reach NASA, it uses the last live download kept in this browser, or the newest snapshot, and says so in the first morning report.</li>
-          <li><strong>🎲 GAME EVENTS</strong> means made-up storms (Random mission).</li>
+          <li><strong><Icon name="live" /> LIVE</strong> means the game downloaded Sun data from NASA a moment ago.</li>
+          <li><strong><Icon name="archived" /> ARCHIVED DATA</strong> means a saved copy. Replay missions always use saved copies, so they work offline. If Today's Sun cannot reach NASA, it uses the last live download kept in this browser, or the newest snapshot, and says so in the first morning report.</li>
+          <li><strong><Icon name="game" /> GAME EVENTS</strong> means made-up storms (Random mission).</li>
         </ul>
       </section>
 
@@ -310,7 +311,7 @@ export function Sources({ mission, onBack }: { mission: Mission | null; onBack: 
                 <tr key={key}>
                   <th scope="row">{f.label}{f.note && <><br /><span class="small">{f.note}</span></>}</th>
                   <td><FactCell f={f} /></td>
-                  <td>{(f as unknown as { verified: boolean }).verified ? '✓ Verified' : '✗ Not verified'}</td>
+                  <td>{(f as unknown as { verified: boolean }).verified ? 'Verified' : 'Not verified'}</td>
                 </tr>
               ))}
             </tbody>

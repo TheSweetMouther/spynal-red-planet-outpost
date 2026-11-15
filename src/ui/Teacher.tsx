@@ -1,11 +1,12 @@
 import { CONFIG } from '../sim/config';
 import { Button } from './components';
+import { Icon } from './icons';
 
 export function Teacher({ onBack }: { onBack: () => void }) {
   return (
     <main class="page text-page">
-      <Button kind="ghost" onClick={onBack}>← Back</Button>
-      <h1>🍎 For teachers and parents</h1>
+      <Button kind="ghost" icon="back" onClick={onBack}>Back</Button>
+      <h1><Icon name="teacher" class="tone-blue" /> For teachers and parents</h1>
       <p class="lead">
         Red Planet Outpost is a turn-based game for ages 7–12. One mission takes about 15 minutes. There is no timer, no
         account, no ads and no tracking.

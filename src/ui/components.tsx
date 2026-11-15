@@ -2,6 +2,7 @@ import type { ComponentChildren } from 'preact';
 import { useEffect, useId, useRef, useState } from 'preact/hooks';
 import { badgeText, type DataStatus } from '../data/loader';
 import { GLOSSARY, type TermId } from './copy';
+import { Icon, type IconName } from './icons';
 
 const seenTerms = new Set<TermId>();
 
@@ -51,51 +52,72 @@ export function Term({ id, children }: { id: TermId; children?: ComponentChildre
   );
 }
 
-export function Meter(props: {
-  icon: string;
+export type Level = 'ok' | 'warn' | 'danger';
+const LEVEL_WORD: Record<Level, string> = { ok: 'OK', warn: 'Careful', danger: 'Danger' };
+
+/**
+ * A compact meter for the outpost HUD: icon, name, number and a bar.
+ * The state is also written as a word and, in danger, drawn with stripes and
+ * a warning icon, so it never depends on color alone.
+ */
+export function HudBar(props: {
+  icon: IconName;
+  tone: string;
   label: ComponentChildren;
   value: number;
   max: number;
+  /** The number shown next to the name, e.g. "63 / 600 mSv". */
+  number: string;
+  /** Full sentence for screen readers. */
   text: string;
-  /** 'ok' | 'warn' | 'danger' also shown as a word, never by color alone. */
-  level: 'ok' | 'warn' | 'danger';
-  /** Draw a marker (e.g. the goal line). */
-  marker?: number;
-  kind?: string;
+  level: Level;
+  /** Tick marks along the bar, as shares of the maximum (e.g. 0.25). */
+  ticks?: number[];
+  /** Split the bar into this many equal cells (battery). */
+  segments?: number;
+  children?: ComponentChildren;
 }) {
   const pct = Math.max(0, Math.min(100, (props.value / props.max) * 100));
-  const word = props.level === 'ok' ? 'OK' : props.level === 'warn' ? 'Careful' : 'Danger';
   return (
-    <div class={`meter meter-${props.level} ${props.kind ?? ''}`}>
-      <div class="meter-head">
-        <span class="meter-icon" aria-hidden="true">{props.icon}</span>
-        <span class="meter-label">{props.label}</span>
-        <span class="meter-state">
-          {props.level === 'ok' ? '✓' : props.level === 'warn' ? '!' : '‼'} {word}
-        </span>
+    <div class={`hud hud-${props.level} tone-${props.tone}`}>
+      <div class="hud-head">
+        <Icon name={props.icon} />
+        <span class="hud-label">{props.label}</span>
+        <span class="hud-num">{props.number}</span>
+        {props.level !== 'ok' && (
+          <span class="hud-state">
+            <Icon name="warning" /> {LEVEL_WORD[props.level]}
+          </span>
+        )}
       </div>
       <div
-        class="meter-bar"
+        class="hud-bar"
         role="meter"
         aria-valuemin={0}
         aria-valuemax={props.max}
         aria-valuenow={Math.round(props.value)}
-        aria-valuetext={props.text}
+        aria-valuetext={`${props.text} ${LEVEL_WORD[props.level]}.`}
       >
-        <div class="meter-fill" style={{ width: `${pct}%` }} />
-        {props.marker !== undefined && <div class="meter-marker" style={{ left: `${(props.marker / props.max) * 100}%` }} />}
+        <div class="hud-fill" style={{ width: `${pct}%` }} />
+        {(props.ticks ?? []).map((t) => (
+          <span key={t} class="hud-tick" style={{ left: `${t * 100}%` }} />
+        ))}
+        {props.segments &&
+          Array.from({ length: props.segments - 1 }, (_, i) => (
+            <span key={i} class="hud-tick hud-gap" style={{ left: `${((i + 1) / props.segments!) * 100}%` }} />
+          ))}
       </div>
-      <div class="meter-text">{props.text}</div>
+      {props.children}
     </div>
   );
 }
 
-/** LIVE / ARCHIVED / GAME badge. The word is always spelled out. */
+/** Live / Archived / Game badge. The word is always spelled out, with its own icon. */
 export function DataBadge({ status }: { status: DataStatus | null }) {
   if (!status)
     return (
       <span class="badge badge-game" title="These storms were made up by the game.">
-        🎲 GAME EVENTS · not real data
+        <Icon name="game" /> GAME EVENTS · not real data
       </span>
     );
   const live = status.kind === 'live';
@@ -104,7 +126,7 @@ export function DataBadge({ status }: { status: DataStatus | null }) {
       class={`badge ${live ? 'badge-live' : 'badge-archived'}`}
       title={live ? `Downloaded just now from ${status.source}` : `Saved copy. Downloaded ${status.fetchedAt.slice(0, 10)} from: ${status.source}`}
     >
-      {live ? '🟢' : '📦'} {badgeText(status)}
+      <Icon name={live ? 'live' : 'archived'} /> {badgeText(status)}
     </span>
   );
 }
@@ -116,6 +138,9 @@ export function Button(props: {
   disabled?: boolean;
   class?: string;
   autoFocus?: boolean;
+  icon?: IconName;
+  /** For icon-only buttons. */
+  label?: string;
 }) {
   const ref = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -127,8 +152,10 @@ export function Button(props: {
       type="button"
       class={`btn btn-${props.kind ?? 'plain'} ${props.class ?? ''}`}
       disabled={props.disabled}
+      aria-label={props.label}
       onClick={props.onClick}
     >
+      {props.icon && <Icon name={props.icon} />}
       {props.children}
     </button>
   );
