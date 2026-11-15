@@ -5,6 +5,7 @@ import type { MissionChoice } from './App';
 import { Button, Term } from './components';
 import { FACTS } from './copy';
 import { Icon } from './icons';
+import { OutpostScene } from './scene/OutpostScene';
 import { isTutorialDone, shouldShowTutorial } from './tutorial';
 
 const newSeed = () => 1000 + Math.floor(Math.random() * 9000);
@@ -40,16 +41,25 @@ export function Title({ busy, error, onCancel, onStart, onSources, onTeacher }: 
   return (
     <main class="page title-page">
       <header class="hero">
-        <div class="hero-sky" aria-hidden="true" />
+        <OutpostScene
+          time="sunset"
+          dust={false}
+          panelsLit={CONFIG.solarClear}
+          panelsTotal={CONFIG.solarClear}
+          cells={{ life: 3, shield: 1, comms: 1, science: 2 }}
+          shieldMax={CONFIG.shieldMaxCells}
+          stormWarned={false}
+        />
+        <div class="hero-shade" aria-hidden="true" />
         <div class="hero-text">
           <h1>Red Planet Outpost</h1>
           <p class="hero-sub">Junior astronaut mission trainer</p>
-          <p class="lead">
-            You run a Mars base for {CONFIG.sols} <Term id="sol">sols</Term>. The Sun gives you power, but never enough for everything. Keep your crew
-            safe <em>and</em> do the science.
-          </p>
         </div>
       </header>
+      <p class="lead hero-lead">
+        You run a Mars base for {CONFIG.sols} <Term id="sol">sols</Term>. The Sun gives you power, but never enough for everything. Keep your crew safe{' '}
+        <em>and</em> do the science.
+      </p>
 
       <ul class="how" aria-label="How to play">
         <li>

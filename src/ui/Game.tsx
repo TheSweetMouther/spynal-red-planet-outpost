@@ -22,6 +22,7 @@ import type { Mission } from './App';
 import { Button, DataBadge, HudBar, SourceLink, Term, type Level } from './components';
 import { FACTS, KID_DELAY_LINE, SYSTEM_INFO } from './copy';
 import { Icon, Stars, type IconName } from './icons';
+import { OutpostScene } from './scene/OutpostScene';
 import { markTutorialDone } from './tutorial';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -292,7 +293,15 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
       <main class="sol-page sol-night">
         {header}
         <section class="stage stage-night" aria-label="Outpost at night">
-          <div class="stage-sky" aria-hidden="true" />
+          <OutpostScene
+            time="night"
+            dust={night.dust}
+            panelsLit={0}
+            panelsTotal={CONFIG.solarClear}
+            cells={{ ...night.alloc, science: 0 }}
+            shieldMax={CONFIG.shieldMaxCells}
+            stormWarned={false}
+          />
           {hud}
           <div class="night-card" aria-live="polite">
             <h2>
@@ -362,7 +371,15 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
       {header}
 
       <section class={`stage ${view.dust ? 'stage-dust' : 'stage-day'}`} aria-label="Outpost">
-        <div class="stage-sky" aria-hidden="true" />
+        <OutpostScene
+          time="day"
+          dust={view.dust}
+          panelsLit={view.solar}
+          panelsTotal={CONFIG.solarClear}
+          cells={alloc}
+          shieldMax={CONFIG.shieldMaxCells}
+          stormWarned={Boolean(view.hasForecast && view.stormToday)}
+        />
         {hud}
         {tut !== null && (
           <div class="coach" role="status">

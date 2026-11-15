@@ -102,17 +102,12 @@ code { font-size: 0.85em; word-break: break-all; }
 }
 
 /* ---------- Title ---------- */
-.hero { position: relative; border-radius: var(--r-stage); overflow: hidden; min-height: 340px; display: flex; align-items: flex-end; }
-.hero-sky {
-  position: absolute; inset: 0;
-  background:
-    radial-gradient(circle at 78% 62%, #dff1ff 0 22px, rgba(125, 184, 232, 0.75) 23px 60px, rgba(125, 184, 232, 0) 190px),
-    linear-gradient(180deg, #3f3340 0%, #7a5a52 38%, #b88054 62%, #8a5a3a 72%, #4a2f24 72.2%, #2b1b15 100%);
-}
+.hero { position: relative; border-radius: var(--r-stage); overflow: hidden; height: clamp(300px, 46vh, 400px); display: flex; align-items: flex-start; background: #4b2f23; }
+.hero-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(30, 21, 18, 0.6) 0%, rgba(30, 21, 18, 0.25) 40%, rgba(30, 21, 18, 0) 62%); }
+.hero-lead { margin: 14px 0 0; max-width: 70ch; }
 .hero-text { position: relative; padding: 24px 28px; max-width: 760px; }
-.hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); margin-bottom: 0.1em; text-shadow: 0 2px 18px rgba(30, 21, 18, 0.7); }
+.hero h1 { font-size: clamp(1.9rem, 4.6vw, 3rem); margin-bottom: 0.1em; text-shadow: 0 2px 18px rgba(30, 21, 18, 0.8); }
 .hero-sub { font-weight: 600; color: var(--haze); margin-bottom: 0.6em; }
-.hero .lead { margin: 0; text-shadow: 0 1px 10px rgba(30, 21, 18, 0.9); }
 .how { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px 20px; margin: 18px 0 22px; }
 .how li { display: flex; gap: 10px; align-items: flex-start; margin: 0; font-size: 0.9rem; }
 .how .icon { font-size: 1.5rem; }
@@ -157,25 +152,7 @@ code { font-size: 0.85em; word-break: break-all; }
 .head-links .btn { min-height: 44px; padding: 4px 12px; font-size: 0.85rem; }
 
 /* The stage: sky, ground, and the HUD on top */
-.stage { position: relative; border-radius: var(--r-stage); overflow: hidden; min-height: 0; isolation: isolate; }
-.stage-sky { position: absolute; inset: 0; z-index: -1; }
-.stage-day .stage-sky {
-  background:
-    radial-gradient(circle at 70% 46%, #fff3d6 0 14px, rgba(255, 233, 190, 0.5) 15px 40px, rgba(255, 233, 190, 0) 120px),
-    linear-gradient(180deg, #a8703f 0%, var(--butterscotch) 45%, #dcae7a 70%, #7a4d33 70.2%, #4b2f23 100%);
-}
-.stage-dust .stage-sky {
-  background:
-    radial-gradient(circle at 70% 46%, rgba(255, 233, 190, 0.5) 0 12px, rgba(255, 233, 190, 0) 60px),
-    linear-gradient(180deg, #5c4131 0%, #7d5a3f 45%, #8c6747 70%, #54382a 70.2%, #38241b 100%);
-}
-.stage-night .stage-sky {
-  background:
-    radial-gradient(circle at 20% 22%, #fff 0 1px, transparent 2px), radial-gradient(circle at 64% 14%, #fff 0 1px, transparent 2px),
-    radial-gradient(circle at 82% 30%, #fff 0 1px, transparent 2px), radial-gradient(circle at 40% 34%, #fff 0 1px, transparent 2px),
-    linear-gradient(180deg, #14131c 0%, #252231 45%, #3b3038 70%, #261a16 70.2%, #17100d 100%);
-}
-
+.stage { position: relative; border-radius: var(--r-stage); overflow: hidden; min-height: 0; isolation: isolate; background: #4b2f23; }
 .hud-grid { position: absolute; top: 12px; left: 12px; right: 12px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; align-items: start; }
 .hud { background: rgba(30, 21, 18, 0.84); border-radius: var(--r-ctl); padding: 7px 10px 9px; color: var(--haze); }
 .hud-head { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
@@ -330,6 +307,69 @@ thead th { background: var(--crust-2); }
 .timeline td, .timeline th { text-align: center; }
 .timeline td.ev { text-align: left; }
 
+/* ---------- The outpost scene (SVG). Driven by state; colors and positions cross-fade. ---------- */
+.scene { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; display: block; }
+.hero .scene { z-index: 0; }
+.scene * { transition: opacity 0.5s, fill 0.5s, stroke 0.5s, stroke-width 0.3s; }
+.sky-sunset, .sky-night, .stars, .sun-halo-blue { opacity: 0; }
+.scene-sunset .sky-sunset, .scene-night .sky-night, .scene-night .stars, .scene-sunset .sun-halo-blue { opacity: 1; }
+.scene-sunset .sun-halo-day { opacity: 0; }
+.sun { transform: translate(800px, 212px); }
+.scene-sunset .sun { transform: translate(905px, 272px); }
+.scene-night .sun { transform: translate(1010px, 340px); opacity: 0; }
+.scene-dust .sun { opacity: 0.45; }
+.hills { fill: #8a5a3a; }
+.scene-sunset .hills { fill: #5b3e33; }
+.scene-night .hills { fill: #2a1f22; }
+.rocks { fill: #2f1d16; opacity: 0.7; }
+.haze { opacity: 0; pointer-events: none; }
+.scene-dust .haze { opacity: 0.5; }
+.scene-night rect[fill='url(#ground)'] { filter: brightness(0.45); }
+.scene-sunset rect[fill='url(#ground)'] { filter: brightness(0.75); }
+
+.conduit { stroke: var(--solar); }
+.conduit[data-system='shield'], .conduit[data-system='comms'] { stroke: var(--blue); }
+.hub { fill: #2a1c16; stroke: var(--solar); stroke-width: 2; }
+.panel-post { stroke: #2a1c16; stroke-width: 3; }
+.panel-face { fill: #3b2c26; stroke: #1e1512; stroke-width: 1.5; }
+.panel-grid { stroke: #1e1512; stroke-width: 1; opacity: 0.6; }
+.panel-lit .panel-face { fill: var(--solar); }
+.scene-night .panel-lit .panel-face, .scene-night .panel-face { fill: #2b2330; }
+.base { fill: #2a1c16; }
+.glass { fill: rgba(235, 211, 176, calc(0.18 + 0.4 * var(--on))); }
+.glass-rim { fill: none; stroke: var(--haze); stroke-width: 2; }
+.plants { fill: none; stroke: #9fc37a; stroke-width: 2; stroke-linecap: round; opacity: calc(0.35 + 0.65 * var(--on)); }
+.hab-shell { fill: #d6bd97; stroke: #1e1512; stroke-width: 1.5; }
+.scene-night .hab-shell { fill: #7d6c66; }
+.hab-door { fill: #6b4a3a; }
+.hab-window { fill: var(--solar); }
+.shield-emitter { fill: var(--blue); opacity: calc(0.3 + 0.7 * var(--on)); }
+.mast, .dish-feed, .rover-mast { stroke: #2a1c16; stroke-width: 3; stroke-linecap: round; }
+.dish-turn { transform: rotate(62deg); transition: transform 0.5s; }
+.dish-on .dish-turn { transform: rotate(-28deg); }
+.dish-bowl { fill: #d6bd97; stroke: #1e1512; stroke-width: 1.5; }
+.dish-tip { fill: var(--muted); }
+.dish-on .dish-tip { fill: var(--blue); }
+.dish-pulse { stroke: var(--blue); stroke-width: 2.5; stroke-linecap: round; opacity: 0; }
+.dish-on .dish-pulse { opacity: 0.9; }
+.garage-shell { fill: #a98863; stroke: #1e1512; stroke-width: 1.5; }
+.scene-night .garage-shell { fill: #6b5a55; }
+.garage-door { fill: #4a352b; }
+.garage-open { fill: #1e1512; }
+.rover { opacity: 0; }
+.rover-out { opacity: 1; }
+.rover-body { fill: var(--haze); stroke: #1e1512; stroke-width: 1.5; }
+.rover-cam { fill: #2a1c16; }
+.wheel { fill: #2a1c16; stroke: var(--muted); stroke-width: 1.5; }
+.helmet { fill: #fff6e2; stroke: #1e1512; stroke-width: 1.5; }
+.suit { fill: var(--haze); stroke: #1e1512; stroke-width: 1.5; }
+.legs { stroke: #1e1512; stroke-width: 3; stroke-linecap: round; }
+/* Storm warning with the crew outside: alarm outline, dashed ring and a warning sign (not color alone). */
+.rover-danger .rover-body, .rover-danger .helmet, .rover-danger .suit { stroke: var(--alarm); stroke-width: 3; }
+.rover-ring { fill: none; stroke: var(--alarm); stroke-width: 3; stroke-dasharray: 8 6; }
+.alert-tri { fill: var(--alarm); stroke: #1e1512; stroke-width: 1.5; stroke-linejoin: round; }
+.alert-mark { stroke: #1e1512; stroke-width: 3.2; stroke-linecap: round; fill: none; }
+
 /* ---------- Tablet (768 to 1023px): the stage shrinks and sockets become 2 x 2 ---------- */
 @media (max-width: 1023px) {
   .sol-page { height: auto; min-height: 100dvh; grid-template-rows: auto 30vh auto auto auto auto; }
@@ -354,5 +394,10 @@ thead th { background: var(--crust-2); }
 /* Reduced motion: nothing moves; state changes still show. */
 @media (prefers-reduced-motion: reduce) {
   .bin-hint, .asking-dish { animation: none; }
+  .dish-turn { transition: none; }
   .hud-fill { transition: none; }
 }
+
+/* At night the outpost keeps its daytime framing at the top of the stage; the summary card sits over the ground. */
+.stage-night { background: #17100d; }
+.stage-night .scene { height: min(300px, 46%); bottom: auto; }
