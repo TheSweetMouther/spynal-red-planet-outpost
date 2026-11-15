@@ -247,3 +247,12 @@ Sep 2017 0% dose, 14.6% science; May 2024 7.3% dose, 38.7% science (the hard one
 - The tutorial now shows on the first mission only (flag in `localStorage`; "Replay tutorial" on the title screen). Two P2 items are not done: the layout shift on the first cell chip, and Science cards tied to specific events.
 - The reading level was reviewed by hand, not tested with children.
 - Layout targets tablets (768px and wider) and desktops. Phones work but are cramped.
+
+## Use of AI
+
+This project was built with Claude Code (Anthropic's AI coding assistant).
+AI generated most of the source code, tests, balance and data scripts, and this README.
+Our team defined the concept, learning goal and game rules, directed and reviewed the work,
+and play-tested the game. Every scientific number was checked by hand against its NASA source
+(see `src/data/facts.json`). AI-assisted commits carry a `Co-Authored-By: Claude` trailer.
+No AI-generated images, video or audio are used. No NASA logos or insignia are used.
