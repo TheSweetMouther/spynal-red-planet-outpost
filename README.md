@@ -78,6 +78,34 @@ secret in a `VITE_` variable. `npm run fetch-donki` reads `NASA_API_KEY` (or
    labelled LIVE.
 4. When saved data is used, the first morning report says so in plain words.
 
+## Visual pass (branch `visual-upgrade`; the functional build is tag `v1-functional`)
+
+Presentation only: `src/sim/`, the balance constants and the data layer are
+unchanged (the one data change is a new, verified "blue sunset" fact in
+`facts.json`). `npm test` and `npm run balance` give the same output as on the tag.
+
+- **Theme:** Mars palette as CSS tokens, Unbounded for display and Lexend for
+  body text, both bundled with `@fontsource` (no CDN, works offline).
+- **Icons:** every emoji is replaced by a bundled Phosphor duotone SVG
+  (`src/ui/icons.tsx`). `node scripts/check-emoji.mjs` fails if one comes back.
+- **One-screen sol:** at 1280x720 the sol screen does not scroll: HUD bars over
+  the scene, a one-line morning report with a "More" disclosure, the power tray,
+  four sockets in a row, preview chips (full sentence one tap away), "End sol".
+  Below 1024px the scene shrinks and the sockets become a 2x2 grid.
+- **Outpost scene** (`src/ui/scene/`): layered SVG driven only by props. Panels
+  lit = cells made today; one conduit lane per system, brighter with more cells;
+  shield dome with hexagon pattern; dish turns when powered; rover and crew
+  outside when Science has power, outlined in the alarm color with a warning
+  sign on a warned storm sol; dust haze; night sky. It has an aria summary.
+- **Motion, two kinds only:** a cell flies to its socket in 250 ms and its
+  conduit carries one pulse; and one 2.8 s timelapse per sol on "End sol" (the
+  Sun sets with a blue glow, storm particles arrive, night falls, the night card
+  slides up). The share of particles the dome turns away equals the share of the
+  storm the shield blocked, and particles are placed by a seeded RNG (mission
+  seed + sol). Skip button, Space and Enter end it at once. With
+  `prefers-reduced-motion` there is no flight and no timelapse; the night card
+  fades in over 300 ms.
+
 ## How it is built
 
 ```
@@ -86,7 +114,7 @@ src/sim/      pure, deterministic simulation (state + allocation + seed -> new s
               strategies.ts (robot players), debrief.ts (key decisions, night notes, cards)
 src/data/     facts.json (every real number + source), donki-mapping.ts, scenarios.ts,
               loader.ts (live -> old endpoint -> cached live -> snapshot), image-credits.json
-src/ui/       Preact screens: Title, Game, Debrief, Sources, Teacher
+src/ui/       Preact screens: Title, Game, Debrief, Sources, Teacher; icons.tsx; scene/ (outpost SVG)
 public/data/  donki/*.json snapshots (with fetched_at), images/ (with credits)
 scripts/      fetch-donki.ts, import-wayback-donki.ts, balance.ts
 tests/        sim.test.ts, data.test.ts

@@ -1,4 +1,5 @@
-import type { Allocation } from '../../sim/state';
+import type { Allocation, SystemId } from '../../sim/state';
+import { StormStreaks, type StormShow } from './StormStreaks';
 
 // The outpost diorama. Pure presentation: props in, SVG out. It never reads
 // the simulation; the screens pass in what the player already sees.
@@ -18,6 +19,12 @@ export interface SceneProps {
   shieldMax: number;
   /** A storm is forecast for today (the player has been warned). */
   stormWarned: boolean;
+  /** Play the end-of-sol timelapse: the Sun sets, storm particles arrive, night falls. */
+  cinematic?: boolean;
+  /** Storm particles to show during the timelapse. */
+  storm?: StormShow | null;
+  /** A cell just moved: send one pulse along that system's conduit. */
+  pulse?: { system: SystemId; id: number; back: boolean } | null;
 }
 
 const HORIZON = 300;
@@ -58,7 +65,7 @@ export function OutpostScene(p: SceneProps) {
 
   return (
     <svg
-      class={`scene scene-${p.time}${p.dust ? ' scene-dust' : ''}`}
+      class={`scene scene-${p.cinematic ? 'cine' : p.time}${p.dust ? ' scene-dust' : ''}`}
       viewBox="0 0 1200 400"
       preserveAspectRatio="xMidYMax slice"
       role="img"
@@ -140,6 +147,15 @@ export function OutpostScene(p: SceneProps) {
         <path class="conduit" data-system="shield" d={`M${HUB_X},${MODULES.shield.lane} H${MODULES.shield.x} V324`} style={conduit(shield)} />
         <path class="conduit" data-system="comms" d={`M${HUB_X},${MODULES.comms.lane} H${MODULES.comms.x} V324`} style={conduit(comms ? 1 : 0)} />
         <path class="conduit" data-system="science" d={`M${HUB_X},${MODULES.science.lane} H${MODULES.science.x} V326`} style={conduit(science)} />
+        {p.pulse && (
+          <path
+            key={p.pulse.id}
+            class={`conduit-pulse${p.pulse.back ? ' conduit-pulse-back' : ''}`}
+            data-system={p.pulse.system}
+            pathLength={100}
+            d={`M${HUB_X},${MODULES[p.pulse.system].lane} H${MODULES[p.pulse.system].x} V325`}
+          />
+        )}
       </g>
       <rect class="hub" x={HUB_X - 9} y="338" width="18" height="32" rx="4" />
 
@@ -226,6 +242,8 @@ export function OutpostScene(p: SceneProps) {
         )}
         {danger && <rect x="1016" y="298" width="94" height="54" rx="10" class="rover-ring" />}
       </g>
+
+      {p.cinematic && p.storm && <StormStreaks show={p.storm} />}
 
       {/* Dust haze over everything on dust-storm sols */}
       <rect class="haze" width="1200" height="400" fill="#6b4a33" />

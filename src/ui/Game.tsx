@@ -109,6 +109,11 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
   const [announce, setAnnounce] = useState('');
   const [more, setMore] = useState(false);
   const [chip, setChip] = useState<PreviewLine['system'] | null>(null);
+  // Motion: a cell in flight between the tray and a socket, a pulse along a conduit, and the end-of-sol timelapse.
+  const [flights, setFlights] = useState<{ id: number; x: number; y: number; dx: number; dy: number }[]>([]);
+  const [pulse, setPulse] = useState<{ system: SystemId; id: number; back: boolean } | null>(null);
+  const [cine, setCine] = useState(false);
+  const motionId = useRef(0);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
 
@@ -141,7 +146,30 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
     };
   }, [more]);
 
-  const move = (from: DropTarget, to: DropTarget) => {
+  /** Screen position of the last cell (or the next free slot) of the tray or a socket. */
+  const spot = (t: DropTarget, last: boolean) => {
+    const box = document.querySelector(t === 'tray' ? '.tray .tokens' : `.socket[data-drop="${t}"] .socket-cells`);
+    if (!box) return null;
+    const cells = box.querySelectorAll('.token, .pip');
+    const cell = cells[cells.length - 1];
+    const r = (cell ?? box).getBoundingClientRect();
+    const size = t === 'tray' ? 46 : 32;
+    return cell ? { x: r.left + r.width / 2 + (last ? 0 : size), y: r.top + r.height / 2 } : { x: r.left + size / 2, y: r.top + r.height / 2 };
+  };
+
+  /** Responsive motion: the cell flies from where it was to where it goes. */
+  const animateMove = (from: DropTarget, to: DropTarget) => {
+    if (reducedMotion()) return;
+    const a = spot(from, true);
+    const b = spot(to, false);
+    if (!a || !b) return;
+    const id = ++motionId.current;
+    setFlights((f) => [...f, { id, x: a.x, y: a.y, dx: b.x - a.x, dy: b.y - a.y }]);
+    // Remove it when the flight is over, even if the browser paused the animation (hidden tab).
+    setTimeout(() => setFlights((f) => f.filter((x) => x.id !== id)), 400);
+  };
+
+  const move = (from: DropTarget, to: DropTarget, fly = false) => {
     if (from === to) return;
     const next = { ...alloc };
     if (from !== 'tray') {
@@ -152,6 +180,9 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
       return;
     }
     if (to !== 'tray') next[to]++;
+    if (fly) animateMove(from, to);
+    // The conduit of the system that gained or lost a cell carries one pulse.
+    if (from === 'tray' || to === 'tray') setPulse({ system: to === 'tray' ? (from as SystemId) : to, id: ++motionId.current, back: to === 'tray' });
     setAlloc(next);
     const name = (t: DropTarget) => (t === 'tray' ? 'the tray' : SYSTEM_INFO[t].name);
     setAnnounce(`Moved 1 cell from ${name(from)} to ${name(to)}.`);
@@ -191,7 +222,26 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
     setTut(null);
     setMore(false);
     setChip(null);
+    setPulse(null);
+    setCine(!reducedMotion()); // with reduced motion the night card simply fades in
   };
+
+  // The timelapse ends by itself, or at once on Skip, Space or Enter.
+  useEffect(() => {
+    if (!cine) return;
+    const timer = setTimeout(() => setCine(false), CINE_MS);
+    const key = (e: KeyboardEvent) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        setCine(false);
+      }
+    };
+    window.addEventListener('keydown', key);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('keydown', key);
+    };
+  }, [cine]);
 
   const nextSol = () => {
     if (game.status !== 'playing') {
@@ -204,11 +254,16 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
     setTimeout(() => headingRef.current?.focus(), 0);
   };
 
-  const lifeLevel: Level = game.life > 60 ? 'ok' : game.life > 30 ? 'warn' : 'danger';
-  const doseLeft = CONFIG.doseLimit - game.dose;
+  // During the timelapse the HUD still shows the morning values; it updates when night falls.
+  const hv =
+    cine && night
+      ? { life: night.lifeBefore, dose: night.doseAfter - night.doseAdded, battery: night.batteryBefore, science: night.scienceAfter - night.scienceGained }
+      : { life: game.life, dose: game.dose, battery: game.battery, science: game.science };
+  const lifeLevel: Level = hv.life > 60 ? 'ok' : hv.life > 30 ? 'warn' : 'danger';
+  const doseLeft = CONFIG.doseLimit - hv.dose;
   const doseLevel: Level = doseLeft > 200 ? 'ok' : doseLeft > 90 ? 'warn' : 'danger';
-  const batteryLevel: Level = game.battery >= 2 ? 'ok' : game.battery === 1 ? 'warn' : today.dust ? 'danger' : 'warn';
-  const stars = starsFor(game.science);
+  const batteryLevel: Level = hv.battery >= 2 ? 'ok' : hv.battery === 1 ? 'warn' : today.dust ? 'danger' : 'warn';
+  const stars = starsFor(hv.science);
 
   const header = (
     <header class="sol-head">
@@ -233,20 +288,20 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
         icon="life"
         tone="butterscotch"
         label="Life Support"
-        value={game.life}
+        value={hv.life}
         max={CONFIG.lifeMax}
-        number={`${game.life} / ${CONFIG.lifeMax}`}
-        text={`Life Support ${game.life} of ${CONFIG.lifeMax}. Air, water and food.`}
+        number={`${hv.life} / ${CONFIG.lifeMax}`}
+        text={`Life Support ${hv.life} of ${CONFIG.lifeMax}. Air, water and food.`}
         level={lifeLevel}
       />
       <HudBar
         icon="radiation"
         tone={doseLevel === 'ok' ? 'blue' : 'alarm'}
         label={<Term id="dose">Dose</Term>}
-        value={game.dose}
+        value={hv.dose}
         max={CONFIG.doseLimit}
-        number={`${Math.round(game.dose)} / ${CONFIG.doseLimit} mSv`}
-        text={`Radiation dose ${Math.round(game.dose)} of ${CONFIG.doseLimit} millisieverts. Stay under the limit.`}
+        number={`${Math.round(hv.dose)} / ${CONFIG.doseLimit} mSv`}
+        text={`Radiation dose ${Math.round(hv.dose)} of ${CONFIG.doseLimit} millisieverts. Stay under the limit.`}
         level={doseLevel}
         ticks={[0.25, 0.5, 0.75]}
       />
@@ -254,10 +309,10 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
         icon="battery"
         tone="solar"
         label="Battery"
-        value={game.battery}
+        value={hv.battery}
         max={CONFIG.batteryMax}
-        number={`${game.battery} / ${CONFIG.batteryMax} cells`}
-        text={`Battery ${game.battery} of ${CONFIG.batteryMax} cells stored.`}
+        number={`${hv.battery} / ${CONFIG.batteryMax} cells`}
+        text={`Battery ${hv.battery} of ${CONFIG.batteryMax} cells stored.`}
         level={batteryLevel}
         segments={CONFIG.batteryMax}
       />
@@ -265,15 +320,15 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
         icon="science"
         tone="haze"
         label="Samples"
-        value={goalSamples(game.science)}
+        value={goalSamples(hv.science)}
         max={CONFIG.scienceGoal}
-        number={`${goalSamples(game.science)} / ${CONFIG.scienceGoal}`}
-        text={`${samplesText(game.science)} samples collected.`}
+        number={`${goalSamples(hv.science)} / ${CONFIG.scienceGoal}`}
+        text={`${samplesText(hv.science)} samples collected.`}
         level="ok"
       >
         {stars > 0 && (
           <div class="hud-bonus">
-            <Stars count={stars} /> Goal reached. Bonus: {bonusSamples(game.science)}
+            <Stars count={stars} /> Goal reached. Bonus: {bonusSamples(hv.science)}
             {stars < 3 && `, next star at ${stars * CONFIG.starStep}`}
           </div>
         )}
@@ -294,15 +349,35 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
         {header}
         <section class="stage stage-night" aria-label="Outpost at night">
           <OutpostScene
-            time="night"
+            time={cine ? 'day' : 'night'}
+            cinematic={cine}
             dust={night.dust}
-            panelsLit={0}
+            panelsLit={cine ? night.solar : 0}
             panelsTotal={CONFIG.solarClear}
-            cells={{ ...night.alloc, science: 0 }}
+            cells={cine ? night.alloc : { ...night.alloc, science: 0 }}
             shieldMax={CONFIG.shieldMaxCells}
             stormWarned={false}
+            storm={
+              cine && night.storm
+                ? {
+                    blocked: night.stormDose > 0 ? night.doseBlocked / night.stormDose : 0,
+                    count: night.storm.severity === 'minor' ? 10 : night.storm.severity === 'moderate' ? 16 : 22,
+                    outside: night.alloc.science > 0,
+                    seed: mission.seed * 100 + night.sol,
+                  }
+                : null
+            }
           />
           {hud}
+          {cine && (
+            <div class="cine-bar">
+              <p role="status">Sol {night.sol} is ending…</p>
+              <Button kind="primary" autoFocus icon="skip" onClick={() => setCine(false)}>
+                Skip
+              </Button>
+            </div>
+          )}
+          {!cine && (
           <div class="night-card" aria-live="polite">
             <h2>
               <Icon name={icon} class={`tone-${tone}`} /> {title}
@@ -334,6 +409,7 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
               {over ? 'See mission debrief' : `Start sol ${game.sol}`}
             </Button>
           </div>
+          )}
         </section>
       </main>
     );
@@ -379,6 +455,7 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
           cells={alloc}
           shieldMax={CONFIG.shieldMaxCells}
           stormWarned={Boolean(view.hasForecast && view.stormToday)}
+          pulse={pulse}
         />
         {hud}
         {tut !== null && (
@@ -555,10 +632,10 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
                 )}
               </p>
               <div class="socket-btns">
-                <button type="button" class="round" aria-label={`Take 1 cell out of ${info.name}`} disabled={n === 0} onClick={() => move(sys, 'tray')}>
+                <button type="button" class="round" aria-label={`Take 1 cell out of ${info.name}`} disabled={n === 0} onClick={() => move(sys, 'tray', true)}>
                   <Icon name="minus" />
                 </button>
-                <button type="button" class="round" aria-label={`Give 1 cell to ${info.name}`} disabled={free === 0} onClick={() => move('tray', sys)}>
+                <button type="button" class="round" aria-label={`Give 1 cell to ${info.name}`} disabled={free === 0} onClick={() => move('tray', sys, true)}>
                   <Icon name="plus" />
                 </button>
               </div>
@@ -606,6 +683,17 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
       </section>
 
       <p class="sr-only" role="status" aria-live="polite">{announce}</p>
+      {flights.map((f) => (
+        <span
+          key={f.id}
+          class="token flight"
+          style={{ left: `${f.x}px`, top: `${f.y}px`, '--dx': `${f.dx}px`, '--dy': `${f.dy}px` }}
+          aria-hidden="true"
+          onAnimationEnd={() => setFlights((list) => list.filter((x) => x.id !== f.id))}
+        >
+          <Icon name="cell" />
+        </span>
+      ))}
       {drag && (
         <span class="token token-ghost" style={{ left: `${drag.x}px`, top: `${drag.y}px` }} aria-hidden="true">
           <Icon name="cell" />
@@ -614,6 +702,10 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
     </main>
   );
 }
+
+/** Length of the end-of-sol timelapse. Keep in step with the scene-cine keyframes in styles.css. */
+const CINE_MS = 2800;
+const reducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const CHIP_ICON: Record<PreviewLine['system'], IconName> = { life: 'life', dose: 'radiation', battery: 'battery', science: 'science', comms: 'comms' };
 const ARROW_WORD = { up: 'goes up', down: 'goes down', same: 'stays the same' } as const;
