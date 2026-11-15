@@ -1,7 +1,7 @@
 import factsFile from '../data/facts.json';
 import { CONFIG } from '../sim/config';
 import type { SystemId } from '../sim/state';
-import type { CardId } from '../sim/debrief';
+import { SCALE_NOTE, type CardId } from '../sim/debrief';
 
 export const FACTS = factsFile.facts;
 export const CARD_SOURCES = factsFile.cards;
@@ -18,7 +18,7 @@ export const SYSTEM_INFO: Record<SystemId, { icon: string; name: string; short: 
     icon: '🛡️',
     name: 'Shielding',
     short: 'Storm shelter',
-    help: `Each cell blocks ${CONFIG.shieldPerCell * 100}% of today's radiation. Up to ${CONFIG.shieldMaxCells} cells.`,
+    help: `Each cell blocks ${CONFIG.shieldPerCell * 100}% of a solar storm for the crew inside. Up to ${CONFIG.shieldMaxCells} cells. No storm, nothing to block.`,
   },
   comms: {
     icon: '📡',
@@ -30,7 +30,7 @@ export const SYSTEM_INFO: Record<SystemId, { icon: string; name: string; short: 
     icon: '🔬',
     name: 'Science',
     short: 'Rover and samples',
-    help: 'Each cell collects 1 sample. Working outside adds radiation.',
+    help: 'Each cell collects 1 sample. Working outside adds radiation, and a lot more in a storm.',
   },
 };
 
@@ -43,7 +43,7 @@ export const GLOSSARY: Record<TermId, { term: string; text: string }> = {
   },
   dose: {
     term: 'radiation dose',
-    text: 'Radiation is invisible energy from the Sun and from deep space. Your dose is how much your body has soaked up so far. It only goes up.',
+    text: `Radiation is invisible energy from the Sun and from deep space. Your dose is how much your body has soaked up so far. It only goes up. ${SCALE_NOTE}`,
   },
   flare: {
     term: 'solar flare',
@@ -80,7 +80,7 @@ export const CARD_TEXT: Record<CardId, { icon: string; title: string; body: stri
   iss_compare: {
     icon: '🛰️',
     title: 'Mars vs. the Space Station',
-    body: `On Mars, the Curiosity rover measured about ${FACTS.mars_surface_absorbed.value} mGy of radiation per day. Detectors inside the Space Station measured ${FACTS.iss_absorbed.value} mGy per day in one week of 2022. That is about the same! But a Mars trip lasts much longer, and the flight there is rougher: ${FACTS.cruise_dose_eq.value} mSv per day, against ${FACTS.mars_surface_dose_eq.value} on the ground.`,
+    body: `On the ground on Mars, the Curiosity rover measured about ${FACTS.mars_surface_dose_eq.value} mSv of radiation per day. On the flight to Mars it measured ${FACTS.cruise_dose_eq.value} mSv per day, almost 3 times as much. Detectors inside the Space Station soak up radiation about as fast as Curiosity does on Mars. But a Mars trip lasts much longer, so the dose adds up.`,
   },
   food: {
     icon: '🥬',

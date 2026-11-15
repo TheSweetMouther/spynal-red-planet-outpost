@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { addDays } from '../data/donki-mapping';
 import { CONFIG } from '../sim/config';
-import { nightNote, stormName } from '../sim/debrief';
-import { emptyAllocation, SYSTEMS, totalCells, type Allocation, type GameState, type SolRecord, type Storm, type SystemId } from '../sim/state';
+import { nightNote, STORM_HONESTY, stormName } from '../sim/debrief';
+import { bonusSamples, emptyAllocation, goalSamples, samplesText, starsFor, SYSTEMS, totalCells, type Allocation, type GameState, type SolRecord, type Storm, type SystemId } from '../sim/state';
 import { morning, newGame, preview, step, type PreviewLine } from '../sim/step';
 import type { Mission } from './App';
 import { Button, DataBadge, Meter, SourceLink, Term } from './components';
 import { FACTS, KID_DELAY_LINE, SYSTEM_INFO } from './copy';
+import { markTutorialDone } from './tutorial';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 export const niceDate = (d: string) => `${Number(d.slice(8, 10))} ${MONTHS[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)}`;
@@ -22,10 +23,21 @@ type DropTarget = SystemId | 'tray';
 
 /** Where the real data for a storm came from, or a clear "game event" label. */
 export function StormSource({ storm, mission }: { storm: Storm; mission: Mission }) {
+  const honesty = (
+    <p class="event-source honesty-line">
+      <span aria-hidden="true">💡</span> {STORM_HONESTY}
+    </p>
+  );
   if (!storm.source)
-    return <p class="event-source">🎲 Game event. This storm was made up by the game, not taken from real data.</p>;
+    return (
+      <>
+        <p class="event-source">🎲 Game event. This storm was made up by the game, not taken from real data.</p>
+        {honesty}
+      </>
+    );
   const s = storm.source;
   return (
+    <>
     <p class="event-source">
       📊 <strong>Real data:</strong> <Term id="flare">solar flare</Term> class <strong>{s.classType}</strong>, seen on{' '}
       {niceDate(s.time)} (NASA DONKI record{' '}
@@ -35,6 +47,8 @@ export function StormSource({ storm, mission }: { storm: Storm; mission: Mission
         ? 'NASA spacecraft at Mars also measured storms in this period. The game imagines how this one would feel at your outpost.'
         : 'This flare was seen from Earth. The game imagines it reaching Mars.'}
     </p>
+    {honesty}
+    </>
   );
 }
 
@@ -116,6 +130,7 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
     const next = step(game, alloc);
     setGame(next);
     setNight(next.history[next.history.length - 1]);
+    if (tut !== null) markTutorialDone(); // finished
     setTut(null);
   };
 
@@ -186,14 +201,21 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
         <div class="goal-head">
           <span aria-hidden="true">🔬</span> Mission goal: samples
         </div>
-        <div class="goal-dots" role="img" aria-label={`${game.science} of ${CONFIG.scienceGoal} samples collected`}>
+        <div class="goal-dots" role="img" aria-label={`${samplesText(game.science)} samples collected`}>
           {Array.from({ length: CONFIG.scienceGoal }, (_, i) => (
             <span key={i} class={i < game.science ? 'dot dot-on' : 'dot'}>{i < game.science ? '●' : '○'}</span>
           ))}
         </div>
         <div class="meter-text">
-          {game.science} of {CONFIG.scienceGoal} collected{game.science >= CONFIG.scienceGoal ? '. Goal reached! ✓' : '.'}
+          {goalSamples(game.science)} of {CONFIG.scienceGoal} collected{game.science >= CONFIG.scienceGoal ? '. Goal reached! ✓' : '.'}
         </div>
+        {game.science >= CONFIG.scienceGoal && (
+          <div class="meter-text bonus" aria-label={`${starsFor(game.science)} of 3 stars`}>
+            <span aria-hidden="true">{'★'.repeat(starsFor(game.science))}{'☆'.repeat(3 - starsFor(game.science))}</span>{' '}
+            Bonus samples: {bonusSamples(game.science)}.{' '}
+            {starsFor(game.science) < 3 && `Next star at ${starsFor(game.science) * CONFIG.starStep}.`}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -212,13 +234,18 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
           </h2>
           <p class="night-text">{note.text}</p>
           {night.storm && <StormSource storm={night.storm} mission={mission} />}
+          {note.scaleNote && (
+            <p class="event-source">
+              <span aria-hidden="true">💡</span> Everyday radiation added {CONFIG.baseDose} mSv today. {note.scaleNote}
+            </p>
+          )}
           <ul class="changes">
             <li>❤️ Life Support: {night.lifeBefore} → <strong>{night.lifeAfter}</strong></li>
             <li>
               ☢️ Dose: +{Math.round(night.doseAdded)} mSv → <strong>{Math.round(night.doseAfter)}</strong> of {CONFIG.doseLimit}
             </li>
             <li>🔋 Battery: {night.batteryBefore} → <strong>{night.batteryAfter}</strong> cells</li>
-            <li>🔬 Samples: +{night.scienceGained} → <strong>{night.scienceAfter}</strong> of {CONFIG.scienceGoal}</li>
+            <li>🔬 Samples: +{night.scienceGained} → <strong>{samplesText(night.scienceAfter)}</strong></li>
           </ul>
           <Button kind="primary" autoFocus onClick={nextSol}>
             {over ? '📋 See mission debrief' : `▶ Start sol ${game.sol}`}
@@ -239,6 +266,12 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
         <section class="panel report" aria-label="Morning report">
           <h2>Morning report</h2>
           <ul class="report-list">
+            {game.sol === 1 && mission.notice && (
+              <li class="warn-line notice-line">
+                <span aria-hidden="true">{mission.status?.kind === 'live' ? '🟢' : '📦'}</span>{' '}
+                <strong>{mission.status?.kind === 'live' ? 'Live data:' : 'Saved data:'}</strong> {mission.notice}
+              </li>
+            )}
             <li>
               {view.dust ? (
                 <>
@@ -257,7 +290,7 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
             {view.hasForecast && storm && (
               <li class="warn-line">
                 <span aria-hidden="true">⚠️</span> <strong>Warning from Earth:</strong> a {stormName({ storm })} arrives{' '}
-                <strong>today</strong>. Power the <Term id="shielding">shielding</Term>!
+                <strong>today</strong>. Power the <Term id="shielding">shielding</Term> and keep the crew inside!
                 <StormSource storm={storm} mission={mission} />
               </li>
             )}
@@ -268,7 +301,8 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
             )}
             {view.hasForecast && view.dustTomorrow && !view.dust && (
               <li class="warn-line">
-                <span aria-hidden="true">🌫️</span> <strong>Dust storm tomorrow.</strong> Save some cells in the battery.
+                <span aria-hidden="true">🌫️</span> <strong>Dust storm tomorrow.</strong> Save some cells in the battery.{' '}
+                <span class="small">(Game rule: in this game, the forecast from Earth also warns about dust one sol ahead.)</span>
               </li>
             )}
             {view.hasForecast && view.dust && (
@@ -324,7 +358,7 @@ export function Game({ mission, onFinish, onQuit, onSources }: Props) {
                 {(tut === 0 || tut === 3) && (
                   <Button kind="primary" onClick={() => setTut(tut + 1)}>Got it ▶</Button>
                 )}
-                <Button kind="ghost" onClick={() => setTut(null)}>Skip the tutorial</Button>
+                <Button kind="ghost" onClick={() => { markTutorialDone(); setTut(null); }}>Skip the tutorial</Button>
               </div>
             </div>
           )}

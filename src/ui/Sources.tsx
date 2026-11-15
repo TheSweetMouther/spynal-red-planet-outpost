@@ -1,5 +1,8 @@
-import { badgeText, DONKI_NEW, DONKI_OLD } from '../data/loader';
+import { useEffect, useState } from 'preact/hooks';
+import { badgeText, DONKI_NEW, DONKI_OLD, loadIndex, type SnapshotIndexEntry } from '../data/loader';
+import { NOTIFICATION_THRESHOLD } from '../data/donki-notifications';
 import { CONFIG } from '../sim/config';
+import { SCALE_NOTE, STORM_HONESTY } from '../sim/debrief';
 import type { Mission } from './App';
 import { Button, DataBadge, SourceLink, Term } from './components';
 import { CARD_SOURCES, FACTS, FACTS_CHECKED } from './copy';
@@ -27,8 +30,31 @@ function FactCell({ f }: { f: Fact }) {
   );
 }
 
+/** The "Complete?" cell: what was downloaded from the API and what is still missing. */
+function Completeness({ s }: { s: SnapshotIndexEntry }) {
+  if (!s.partial && s.flare_source === 'FLR') return <>✅ Complete: flares and particle events downloaded from the DONKI API.</>;
+  if (s.flare_source === 'notifications')
+    return (
+      <>
+        ✅ <strong>Particle events:</strong> complete download from the DONKI API.
+        <br />
+        ⚠️ <strong>Flares: partial.</strong> DONKI's flare list (FLR) answered “{s.flr_problem ?? 'error'}” on the download day, so
+        flares come from DONKI's own flare notifications, which cover every flare of class {NOTIFICATION_THRESHOLD} and bigger
+        {s.flares_from_archive ? `, plus ${s.flares_from_archive} records read from Internet Archive copies of DONKI pages` : ''}.
+        Flares smaller than {NOTIFICATION_THRESHOLD} may be missing.
+      </>
+    );
+  return <>⚠️ Partial: built from Internet Archive copies of DONKI pages because the DONKI API could not be reached. Some real flares are missing.</>;
+}
+
 export function Sources({ mission, onBack }: { mission: Mission | null; onBack: () => void }) {
   const F = FACTS as unknown as Record<string, Fact>;
+  const [snapshots, setSnapshots] = useState<SnapshotIndexEntry[] | null>(null);
+  useEffect(() => {
+    loadIndex((url) => fetch(url))
+      .then(setSnapshots)
+      .catch(() => setSnapshots([]));
+  }, []);
   const perSol = FACTS.mars_surface_dose_eq.value * 1.0275;
 
   const scaled: { what: string; fact: Fact; game: string; why: string }[] = [
@@ -48,7 +74,7 @@ export function Sources({ mission, onBack }: { mission: Mission | null; onBack: 
       what: 'Solar storm dose',
       fact: F.may2024_mars_dose,
       game: `${CONFIG.stormDose.minor} / ${CONFIG.stormDose.moderate} / ${CONFIG.stormDose.severe} mSv for a small / medium / big storm, × ${CONFIG.sepMultiplier} with a particle blast`,
-      why: 'Made much bigger for play. The biggest storm Curiosity has measured on the ground gave about 8 mGy, far less than the game\'s big storms. Mars\' air and the planet itself block a lot. Storms are a much bigger danger in open space on the way to Mars.',
+      why: `Made much bigger for play. The biggest storm Curiosity has measured on the ground gave about 8 mGy, far less than the game's big storms. ${STORM_HONESTY} Every storm card in the game says this too.`,
     },
     {
       what: 'Length of a day',
@@ -71,8 +97,26 @@ export function Sources({ mission, onBack }: { mission: Mission | null; onBack: 
     {
       what: 'Shielding',
       fact: { label: 'no single real value', value: 'varies', unit: '', source_title: 'NASA: Mars solar storm article (cliffs and lava tubes could add shielding)', source_url: FACTS.may2024_mars_dose.source_url },
-      game: `Each cell blocks ${CONFIG.shieldPerCell * 100}%, up to ${CONFIG.shieldMaxCells} cells`,
-      why: 'A simple game rule. Real shielding depends on the material and how thick it is.',
+      game: `Each cell blocks ${CONFIG.shieldPerCell * 100}% of a storm's dose for the crew inside, up to ${CONFIG.shieldMaxCells} cells (${CONFIG.shieldPerCell * CONFIG.shieldMaxCells * 100}%). It does not block the everyday ${CONFIG.baseDose} mSv`,
+      why: 'A simple game rule. Real shielding depends on the material and how thick it is. The game treats the shelter as a storm shelter only: everyday cosmic rays are much harder to stop than storm particles, so in the game they always get through.',
+    },
+    {
+      what: 'Working outside (Science)',
+      fact: { label: 'no single real value', value: 'varies', unit: '', source_title: 'NASA: Mars solar storm article (astronauts would need to shelter)', source_url: FACTS.may2024_mars_dose.source_url },
+      game: `Each Science cell adds ${CONFIG.evaDose} mSv, plus ${CONFIG.evaStormShare * 100}% of that sol's storm dose (at most ${CONFIG.evaStormMax * 100}% in one sol). Shielding cannot reduce it`,
+      why: 'A game rule that teaches the real operating rule: on a storm day, cancel the work outside and stay in the shelter. People outside have no shelter around them.',
+    },
+    {
+      what: 'Dust storm warning',
+      fact: { label: 'no real forecast product is claimed', value: 'game rule', unit: '', source_title: 'NASA / JPL: Opportunity and the 2018 dust storm', source_url: FACTS.dust_2018_tau.source_url },
+      game: 'A forecast from Earth (1 Comms cell the sol before) also warns about dust one sol ahead',
+      why: 'A game rule, so that saving battery is a choice and not luck. The game does not copy any real dust forecast service.',
+    },
+    {
+      what: 'Science goal and stars',
+      fact: { label: 'not a real value', value: 'game rule', unit: '', source_title: 'Game rule. The dose limit it is balanced against is real: NASA-STD-3001', source_url: FACTS.career_limit.source_url },
+      game: `${CONFIG.scienceGoal} samples to finish the mission. ${CONFIG.starStep} bonus samples earn a second star, ${CONFIG.starStep * 2} a third`,
+      why: 'Made up for play. The goal was tuned with 1,000 robot missions per strategy so that a fixed plan fails and a player who reacts to warnings usually wins.',
     },
   ];
 
@@ -92,7 +136,8 @@ export function Sources({ mission, onBack }: { mission: Mission | null; onBack: 
         <ul>
           <li>✅ <strong>Real:</strong> the <Term id="flare">solar flares</Term> in replay missions. Each one has a NASA record number.</li>
           <li>✅ <strong>Real:</strong> the facts about Mars, radiation, dust storms and <Term id="commdelay">comm delay</Term>.</li>
-          <li>🎲 <strong>Game rules:</strong> power cells, the size of storm doses, and how well the shield works. Real life is more complicated!</li>
+          <li>🎲 <strong>Game rules:</strong> power cells, the size of storm doses, how well the shield works, and the dust storm warning. Real life is more complicated!</li>
+          <li>🔢 <strong>Bigger numbers:</strong> {SCALE_NOTE} Real life: about {FACTS.mars_surface_dose_eq.value} mSv per day on Mars. In the game: {CONFIG.baseDose} mSv per sol.</li>
           <li>🎲 <strong>Game events:</strong> dust storm timing, worn-out parts and harvests. The game always labels these.</li>
           <li>💭 <strong>Imagined:</strong> most flares were seen from Earth's side of the Sun. The game <em>imagines</em> each one reaching Mars.</li>
         </ul>
@@ -108,8 +153,11 @@ export function Sources({ mission, onBack }: { mission: Mission | null; onBack: 
                 <br />
                 <span class="small">
                   {badgeText(mission.status)}. Downloaded {mission.status.fetchedAt.slice(0, 10)} from: {mission.status.source}.
-                  {mission.status.partial && ' This saved copy is partial: it only has the flares the archive captured.'}
-                  {mission.status.reason && ` Live data was not used because: ${mission.status.reason}.`}
+                  {mission.status.origin === 'cache' && ' This is the last live download, kept in this browser.'}
+                  {mission.status.flareSource === 'notifications' && ` Flares come from DONKI flare notifications (class ${NOTIFICATION_THRESHOLD} and bigger), because DONKI's flare list did not answer. Smaller flares may be missing.`}
+                  {mission.status.partial && mission.status.flareSource !== 'notifications' && ' This saved copy is partial: it only has the flares the archive captured.'}
+                  {mission.status.reason && mission.status.kind === 'archived' && ` Live data was not used because: ${mission.status.reason}.`}
+                  {mission.status.reason && mission.status.kind === 'live' && ` Problem seen: ${mission.status.reason}.`}
                 </span>
               </>
             )}
@@ -117,9 +165,32 @@ export function Sources({ mission, onBack }: { mission: Mission | null; onBack: 
         ) : (
           <p>No mission started yet. Start one to see its data badge here.</p>
         )}
+        <h3>Saved snapshots in this build</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Mission</th><th scope="col">Days covered</th><th scope="col">Downloaded from (source_endpoint)</th><th scope="col">Downloaded at (fetched_at)</th><th scope="col">Records</th><th scope="col">Complete?</th></tr>
+            </thead>
+            <tbody>
+              {(snapshots ?? []).map((s) => (
+                <tr key={s.id}>
+                  <th scope="row">{s.title}</th>
+                  <td>{s.start} to {s.end}</td>
+                  <td><code>{s.source_endpoint ?? s.source ?? 'unknown'}</code></td>
+                  <td>{s.fetched_at}</td>
+                  <td>{s.flares ?? '?'} flares, {s.particleEvents ?? '?'} particle events</td>
+                  <td><Completeness s={s} /></td>
+                </tr>
+              ))}
+              {snapshots !== null && snapshots.length === 0 && (
+                <tr><td colSpan={6}>The snapshot list could not be loaded.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
         <ul>
           <li><strong>🟢 LIVE</strong> means the game downloaded Sun data from NASA a moment ago.</li>
-          <li><strong>📦 ARCHIVED DATA</strong> means a saved copy. Replay missions always use saved copies, so they work offline.</li>
+          <li><strong>📦 ARCHIVED DATA</strong> means a saved copy. Replay missions always use saved copies, so they work offline. If Today's Sun cannot reach NASA, it uses the last live download kept in this browser, or the newest snapshot, and says so in the first morning report.</li>
           <li><strong>🎲 GAME EVENTS</strong> means made-up storms (Random mission).</li>
         </ul>
       </section>
@@ -188,7 +259,7 @@ export function Sources({ mission, onBack }: { mission: Mission | null; onBack: 
               <tr>
                 <td><SourceLink href="https://ccmc.gsfc.nasa.gov/tools/DONKI/">NASA CCMC DONKI</SourceLink> (flares FLR, particle events SEP)</td>
                 <td>Solar storms in Real Storm Replay and Today's Sun</td>
-                <td>Replay: archived snapshots in <code>public/data/donki/</code>. Today's Sun: live from <code>{DONKI_NEW}</code>, then <code>{DONKI_OLD}</code>, then the newest snapshot.</td>
+                <td>Replay: archived snapshots in <code>public/data/donki/</code>. Today's Sun: live from <code>{DONKI_NEW}</code>, then <code>{DONKI_OLD}</code>, then the last live download kept in this browser, then the newest snapshot. Each endpoint gets 4 seconds.</td>
               </tr>
               <tr>
                 <td>Curiosity RAD (<SourceLink href={FACTS.mars_surface_dose_eq.source_url}>Hassler et al. 2014</SourceLink>; <SourceLink href={FACTS.cruise_dose_eq.source_url}>Zeitlin et al. 2013</SourceLink>)</td>

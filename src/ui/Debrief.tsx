@@ -1,6 +1,6 @@
 import { CONFIG } from '../sim/config';
 import { keyDecisions, outcomeText, stormName, unlockedCards } from '../sim/debrief';
-import type { GameState } from '../sim/state';
+import { samplesText, type GameState } from '../sim/state';
 import type { Mission } from './App';
 import { Button, DataBadge, SourceLink } from './components';
 import { CARD_SOURCES, CARD_TEXT } from './copy';
@@ -26,6 +26,11 @@ export function Debrief({ mission, state, onRetry, onNew, onSources }: Props) {
         <h1>
           <span aria-hidden="true">{won ? '🏆' : '🛬'}</span> {outcome.title}
         </h1>
+        {won && (
+          <p class="stars" role="img" aria-label={`${outcome.stars} of 3 stars`}>
+            {'★'.repeat(outcome.stars)}{'☆'.repeat(3 - outcome.stars)}
+          </p>
+        )}
         <p class="lead">{outcome.text}</p>
         <DataBadge status={mission.status} />
       </header>
@@ -34,7 +39,7 @@ export function Debrief({ mission, state, onRetry, onNew, onSources }: Props) {
         <div><span aria-hidden="true">❤️</span> Life Support <strong>{state.life}</strong></div>
         <div><span aria-hidden="true">☢️</span> Dose <strong>{Math.round(state.dose)}</strong> of {CONFIG.doseLimit} mSv</div>
         <div><span aria-hidden="true">🔋</span> Battery <strong>{state.battery}</strong></div>
-        <div><span aria-hidden="true">🔬</span> Samples <strong>{state.science}</strong> of {CONFIG.scienceGoal}</div>
+        <div><span aria-hidden="true">🔬</span> Samples <strong>{samplesText(state.science)}</strong></div>
       </section>
 
       <div class="debrief-btns">
@@ -48,9 +53,10 @@ export function Debrief({ mission, state, onRetry, onNew, onSources }: Props) {
         {decisions.length === 0 && <p>You kept things steady the whole way. No single choice stood out.</p>}
         <ol class="decisions">
           {decisions.map((d) => (
-            <li key={d.title} class={`decision decision-${d.tone}`}>
+            <li key={d.title} class={`decision decision-${d.tone}${d.cause ? ' decision-cause' : ''}`}>
+              {d.cause && <p class="cause-tag">Why the mission ended this way</p>}
               <h3>
-                <span aria-hidden="true">{d.tone === 'good' ? '👍' : '⚠️'}</span> {d.title}
+                <span aria-hidden="true">{d.cause ? '👎' : d.tone === 'good' ? '👍' : '⚠️'}</span> {d.title}
               </h3>
               <p>{d.why}</p>
             </li>
@@ -58,7 +64,7 @@ export function Debrief({ mission, state, onRetry, onNew, onSources }: Props) {
         </ol>
         <p class="lesson">
           <strong>The big idea:</strong> on Mars there is never enough power for everything. Protecting the crew from a
-          solar storm means doing less science that sol.
+          solar storm means staying inside and doing less science that sol.
         </p>
       </section>
 

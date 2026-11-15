@@ -181,6 +181,7 @@ async function main() {
       window: { id: w.id, title: w.title, kind: 'replay', start: w.start, end: w.end, marsObserved: w.marsObserved, blurb: w.blurb },
       fetched_at: new Date().toISOString(),
       source: 'Internet Archive captures of DONKI event pages (kauai.ccmc.gsfc.nasa.gov/DONKI/view)',
+      source_endpoint: 'https://web.archive.org/web/*/kauai.ccmc.gsfc.nasa.gov/DONKI/view/*',
       partial: true,
       note:
         'The DONKI API was unreachable when this was built, so these records were read from archived copies of ' +

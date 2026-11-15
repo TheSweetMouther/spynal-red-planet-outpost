@@ -50,24 +50,31 @@ export const CONFIG = {
   stormDose: { minor: 15, moderate: 40, severe: 80 },
   /** A linked particle event (SEP) multiplies the storm dose. */
   sepMultiplier: 2.5,
-  /** Each Shielding cell blocks this share of today's habitat dose. */
-  shieldPerCell: 0.2,
+  /**
+   * Each Shielding cell blocks this share of today's storm dose for the crew
+   * inside. The everyday cosmic-ray dose (baseDose) is not blocked.
+   */
+  shieldPerCell: 0.4,
   /** Shielding cells beyond this do nothing. */
-  shieldMaxCells: 4,
+  shieldMaxCells: 2,
   /** Extra dose for each Science cell (time outside on an EVA). */
-  evaDose: 4,
-  /** Share of today's storm dose each Science cell adds (outside the shelter). */
-  evaStormShare: 0.1,
+  evaDose: 5,
+  /** Share of today's storm dose each Science cell adds (crew outside the shelter). */
+  evaStormShare: 0.5,
+  /** The crew outside can never get more than this many times the storm dose. */
+  evaStormMax: 1,
 
   // ---- Science ----
   /** Science points earned for each Science cell. */
   sciencePerCell: 1,
   /** Points needed by the end of the mission. */
-  scienceGoal: 20,
+  scienceGoal: 22,
+  /** Extra samples for each bonus star: goal = 1 star, goal + 5 = 2, goal + 10 = 3. */
+  starStep: 5,
 
   // ---- Random mission generator ----
   random: {
-    stormsMin: 2,
+    stormsMin: 3,
     stormsMax: 4,
     severityWeights: { minor: 0.4, moderate: 0.4, severe: 0.2 },
     sepChance: { minor: 0, moderate: 0.25, severe: 0.6 },

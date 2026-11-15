@@ -1,6 +1,7 @@
 import { CONFIG } from './config';
 import { makeRng } from './rng';
-import { emptyAllocation, SYSTEMS, type Allocation, type MorningView, type SystemId } from './state';
+import { emptyAllocation, stormDoseOf, SYSTEMS, type Allocation, type MorningView, type SystemId } from './state';
+import { batteryAfterAllocation } from './step';
 
 // Robot players used by scripts/balance.ts and the tests. They only see the
 // MorningView, exactly what a human player sees.
@@ -51,8 +52,8 @@ export function randomStrategy(seed: number): Strategy {
 }
 
 /**
- * A sensible player: buys the forecast, shelters when a storm is coming,
- * does science on calm sols, and saves battery before dusty nights.
+ * A sensible player: buys the forecast, shelters and cancels outside work when
+ * a storm is coming, does science on calm sols, and saves battery before dust.
  */
 export const adaptive: Strategy = (view) => {
   const a = emptyAllocation();
@@ -68,38 +69,73 @@ export const adaptive: Strategy = (view) => {
   const doseRoom = CONFIG.doseLimit - view.dose;
 
   put('life', CONFIG.lifeNeed + (view.life < 60 ? 1 : 0));
+  // On a storm sol the shelter comes before everything except Life Support.
+  const storm = view.hasForecast ? view.stormToday : undefined;
+  if (storm) put('shield', storm.severity === 'minor' && !storm.sep ? 1 : CONFIG.shieldMaxCells);
+  else if (!view.hasForecast) put('shield', 1); // flying blind: play it safer
   if (!lastSol) put('comms', 1);
 
-  // Keep cells back for the heaters when dust is here or coming.
-  let reserve = 0;
-  if (view.dust || view.dustTomorrow) reserve = Math.max(0, 2 - Math.max(0, view.battery - (view.available - left)));
-  if (lastSol) reserve = 0;
+  // Keep cells in the battery for the heaters when dust is here or coming.
+  const keep = lastSol ? 0 : view.dust || view.dustTomorrow ? 2 : 0;
+  const batteryIf = (science: number) =>
+    batteryAfterAllocation(view.solar, view.battery, view.available - left + science).after;
 
-  const storm = view.hasForecast ? view.stormToday : undefined;
-  if (storm) {
-    const want = storm.sep || storm.severity === 'severe' ? 4 : storm.severity === 'moderate' ? 3 : 2;
-    put('shield', want);
-  } else if (!view.hasForecast) {
-    put('shield', 2); // flying blind: play it safer
-  } else if (doseRoom / solsLeft < CONFIG.baseDose + 14) {
-    put('shield', 2); // dose budget is getting tight
+  // Science with what is left. On a storm sol, working outside costs a lot of
+  // dose, so stay in unless the storm is small or the goal is slipping away.
+  const stormDose = stormDoseOf(storm ?? null);
+  const costPerCell = CONFIG.evaDose + CONFIG.evaStormShare * stormDose;
+  const habitatToday = CONFIG.baseDose + stormDose * (1 - Math.min(a.shield, CONFIG.shieldMaxCells) * CONFIG.shieldPerCell);
+  // Never spend dose the rest of the mission will need.
+  const affordable = Math.floor((doseRoom - habitatToday - (solsLeft - 1) * CONFIG.baseDose - 15) / costPerCell);
+  if (scienceNeeded > 0 && costPerCell <= CONFIG.evaDose * 2.5) {
+    let s = Math.max(0, Math.min(left, scienceNeeded, affordable));
+    while (s > 0 && batteryIf(s) < keep) s--;
+    put('science', s);
   }
-
-  // Science with what is left, unless a big storm makes going outside costly.
-  const bigStorm = storm && (storm.sep || storm.severity === 'severe');
-  const behind = scienceNeeded > (solsLeft - 1) * 3;
-  if (scienceNeeded > 0 && (!bigStorm || behind)) {
-    put('science', Math.min(left - reserve, scienceNeeded));
+  // Spare cells charge the battery. Only what would overflow goes to the shield.
+  while (left > 0 && a.shield < CONFIG.shieldMaxCells) {
+    const before = batteryIf(0);
+    a.shield++;
+    left--;
+    if (batteryIf(0) < before) {
+      a.shield--;
+      left++;
+      break;
+    }
   }
-  if (!lastSol && left > reserve && !storm && scienceNeeded === 0) put('shield', left - reserve);
   return a;
 };
+
+/** Rushes science with no Comms and no shield, then hides once the goal is met. Never reacts to warnings. */
+export const rushThenHide: Strategy = (view) =>
+  view.science < CONFIG.scienceGoal
+    ? allScience(view)
+    : byPriority(['life', 'life', 'life', 'shield', 'shield', 'shield', 'shield'], ['life'])(view);
+
+/** The same plan every sol: Life Support 3, a set Shielding and Comms, the rest to Science. */
+export function fixedPlan(shield: number, comms: number): Strategy {
+  const order: SystemId[] = ['life', 'life', 'life'];
+  for (let i = 0; i < comms; i++) order.push('comms');
+  for (let i = 0; i < shield; i++) order.push('shield');
+  return byPriority(order, ['science']);
+}
+
+const FIXED_PLANS = [1, 2, 3, 4].flatMap((shield) =>
+  [0, 1].map((comms) => ({
+    id: `fixed-s${shield}-c${comms}`,
+    label: `Fixed: shield ${shield}, ${comms ? 'comms 1' : 'no comms'}, rest science`,
+    fixed: true,
+    make: () => fixedPlan(shield, comms),
+  })),
+);
 
 export const STRATEGIES: { id: string; label: string; fixed: boolean; make: (seed: number) => Strategy }[] = [
   { id: 'science', label: 'All-in Science', fixed: true, make: () => allScience },
   { id: 'safety', label: 'All-in Safety', fixed: true, make: () => allSafety },
   { id: 'balanced', label: 'Balanced (fixed)', fixed: true, make: () => balanced },
   { id: 'comms', label: 'Comms-first (fixed)', fixed: true, make: () => commsFirst },
+  { id: 'rush', label: 'Rush science, then hide (no comms)', fixed: true, make: () => rushThenHide },
+  ...FIXED_PLANS,
   { id: 'random', label: 'Random', fixed: false, make: (seed) => randomStrategy(seed) },
   { id: 'adaptive', label: 'Adaptive (reacts to warnings)', fixed: false, make: () => adaptive },
 ];

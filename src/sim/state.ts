@@ -117,6 +117,28 @@ export function stormDoseOf(storm: Storm | null): number {
   return storm.sep ? base * CONFIG.sepMultiplier : base;
 }
 
+/** Samples shown on the goal counter: never more than the goal. */
+export function goalSamples(science: number): number {
+  return Math.min(science, CONFIG.scienceGoal);
+}
+
+/** Samples collected beyond the goal. */
+export function bonusSamples(science: number): number {
+  return Math.max(0, science - CONFIG.scienceGoal);
+}
+
+/** 0 stars below the goal, then 1, 2 or 3. */
+export function starsFor(science: number): number {
+  if (science < CONFIG.scienceGoal) return 0;
+  return Math.min(3, 1 + Math.floor(bonusSamples(science) / CONFIG.starStep));
+}
+
+/** "22 of 22" or "22 of 22, plus 4 bonus". Never "26 of 22". */
+export function samplesText(science: number): string {
+  const bonus = bonusSamples(science);
+  return `${goalSamples(science)} of ${CONFIG.scienceGoal}` + (bonus > 0 ? `, plus ${bonus} bonus` : '');
+}
+
 export function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }

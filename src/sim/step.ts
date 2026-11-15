@@ -84,6 +84,11 @@ export function shieldFraction(cells: number): number {
   return Math.min(cells, CONFIG.shieldMaxCells) * CONFIG.shieldPerCell;
 }
 
+/** Share of the storm dose that reaches the crew working outside. */
+export function evaStormFactor(scienceCells: number): number {
+  return Math.min(CONFIG.evaStormMax, scienceCells * CONFIG.evaStormShare);
+}
+
 export interface DoseParts {
   /** Dose that reached the crew inside the habitat. */
   habitat: number;
@@ -95,10 +100,10 @@ export interface DoseParts {
 
 export function doseFor(alloc: Allocation, storm: Storm | null): DoseParts {
   const stormDose = stormDoseOf(storm);
-  const incoming = CONFIG.baseDose + stormDose;
-  const blocked = incoming * shieldFraction(alloc.shield);
-  const habitat = incoming - blocked;
-  const eva = alloc.science * (CONFIG.evaDose + CONFIG.evaStormShare * stormDose);
+  // The shelter blocks storm particles. Everyday cosmic rays go through it.
+  const blocked = stormDose * shieldFraction(alloc.shield);
+  const habitat = CONFIG.baseDose + stormDose - blocked;
+  const eva = alloc.science * CONFIG.evaDose + evaStormFactor(alloc.science) * stormDose;
   return {
     habitat: round1(habitat),
     blocked: round1(blocked),
@@ -244,15 +249,23 @@ export function preview(state: GameState, alloc: Allocation): PreviewLine[] {
   let doseText = `Radiation dose goes up by about ${Math.round(d.total)}`;
   if (!view.hasForecast) doseText += ', or more if a storm hits. You have no forecast today';
   doseText += '.';
-  if (alloc.shield > 0) doseText += ` Shield blocks ${shieldPct}%.`;
+  if (alloc.shield > 0) {
+    if (known) doseText += ` The shelter blocks ${shieldPct}% of the storm for the crew inside.`;
+    else if (view.hasForecast) doseText += ' No storm is forecast, so the shelter has nothing to block.';
+    else doseText += ` The shelter would block ${shieldPct}% of a storm.`;
+  }
   if (alloc.shield > CONFIG.shieldMaxCells) doseText += ` Only ${CONFIG.shieldMaxCells} shield cells can help.`;
-  if (alloc.science > 0) doseText += ` Working outside adds ${Math.round(d.eva)}.`;
+  if (alloc.science > 0)
+    doseText += known
+      ? ` Working outside in the storm adds ${Math.round(d.eva)}. The shelter cannot protect people outside.`
+      : ` Working outside adds ${Math.round(d.eva)}.`;
   const overLimit = view.dose + d.total > CONFIG.doseLimit;
   if (overLimit) doseText += ' That is over the safe limit!';
   lines.push({
     system: 'dose',
     trend: 'up',
-    tone: overLimit || (known && shieldPct < 40) || d.total > CONFIG.baseDose + 12 ? 'bad' : 'neutral',
+    // Science on a warned storm sol is always flagged, with the dose number in the text.
+    tone: overLimit || (known && alloc.science > 0) || d.total > CONFIG.baseDose + CONFIG.evaDose * 5 ? 'bad' : 'neutral',
     text: doseText,
   });
 
@@ -271,6 +284,14 @@ export function preview(state: GameState, alloc: Allocation): PreviewLine[] {
       batteryText += ` Heaters use ${CONFIG.dustNightDraw} cell tonight.`;
     } else {
       batteryText += ` Empty battery on a dusty night: Life Support loses ${CONFIG.coldNightLoss}.`;
+      batteryTone = 'bad';
+    }
+  }
+  if (view.dustTomorrow && !view.dust && view.sol < CONFIG.sols) {
+    // Game rule: the forecast from Earth also warns about dust one sol ahead.
+    if (p.after >= 2) batteryText += ' Good: saved cells will help during the dust storm.';
+    else {
+      batteryText += ' Dust storm tomorrow: saving cells now helps during the dust storm.';
       batteryTone = 'bad';
     }
   }

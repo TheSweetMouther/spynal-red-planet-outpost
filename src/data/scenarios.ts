@@ -18,8 +18,22 @@ export interface DonkiSnapshot {
   };
   /** ISO time the data was downloaded from DONKI. */
   fetched_at: string;
-  /** Base URL the data came from. */
+  /** Human-readable source of the data. */
   source: string;
+  /** Base URL of the API (or archive) the records were downloaded from. */
+  source_endpoint?: string;
+  /** True when the snapshot is known to be missing events. */
+  partial?: boolean;
+  /**
+   * Where the flares came from. 'FLR' is DONKI's full flare list. 'notifications'
+   * means the flare list was down and DONKI's flare alerts were used instead:
+   * they only cover flares of class M5.0 and bigger.
+   */
+  flare_source?: 'FLR' | 'notifications';
+  /** Why the full flare list was not used, e.g. "HTTP 404". */
+  flr_problem?: string;
+  /** Free-text note about how the snapshot was built. */
+  note?: string;
   FLR: DonkiFlare[];
   SEP: DonkiSep[];
 }

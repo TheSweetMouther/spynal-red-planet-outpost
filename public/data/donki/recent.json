@@ -1,0 +1,19 @@
+{
+  "window": {
+    "id": "recent",
+    "title": "Today's Sun",
+    "kind": "recent",
+    "start": "2026-10-17",
+    "end": "2026-11-15"
+  },
+  "fetched_at": "2026-11-15T10:22:41.448Z",
+  "source": "NASA CCMC DONKI API",
+  "source_endpoint": "https://api.nasa.gov/DONKI",
+  "flare_source": "notifications",
+  "flr_problem": "HTTP 404",
+  "partial": true,
+  "note": "SEP is a complete download from the DONKI API. The DONKI flare list (FLR) failed (HTTP 404), so flares come from DONKI flare notifications, which cover every flare of class M5.0 and bigger. Flares smaller than that may be missing.",
+  "flares_from_archive": 0,
+  "FLR": [],
+  "SEP": []
+}

@@ -4,21 +4,27 @@ import { CONFIG } from '../sim/config';
 import type { MissionChoice } from './App';
 import { Button, Term } from './components';
 import { FACTS } from './copy';
+import { isTutorialDone, shouldShowTutorial } from './tutorial';
 
 const newSeed = () => 1000 + Math.floor(Math.random() * 9000);
 
 interface Props {
-  busy: boolean;
+  /** 'live' while asking NASA, 'saved' while loading bundled files. */
+  busy: 'live' | 'saved' | null;
   error: string | null;
+  /** Stop waiting for NASA and use saved data. */
+  onCancel: () => void;
   onStart: (choice: MissionChoice, seed: number, tutorial: boolean) => void;
   onSources: () => void;
   onTeacher: () => void;
 }
 
-export function Title({ busy, error, onStart, onSources, onTeacher }: Props) {
+export function Title({ busy, error, onCancel, onStart, onSources, onTeacher }: Props) {
   const [index, setIndex] = useState<SnapshotIndexEntry[] | null>(null);
   const [seedText, setSeedText] = useState(() => String(newSeed()));
-  const [tutorial, setTutorial] = useState(true);
+  // The tutorial shows on the first mission only, unless the player asks to see it again.
+  const [tutorialDone] = useState(() => isTutorialDone());
+  const [replayTutorial, setReplayTutorial] = useState(false);
 
   useEffect(() => {
     loadIndex((url) => fetch(url))
@@ -27,7 +33,7 @@ export function Title({ busy, error, onStart, onSources, onTeacher }: Props) {
   }, []);
 
   const seed = Math.max(1, Math.min(999999, Math.floor(Number(seedText)) || 1));
-  const go = (choice: MissionChoice) => onStart(choice, seed, tutorial);
+  const go = (choice: MissionChoice) => onStart(choice, seed, shouldShowTutorial(replayTutorial));
   const replays = (index ?? []).filter((e) => e.kind === 'replay');
 
   return (
@@ -57,7 +63,7 @@ export function Title({ busy, error, onStart, onSources, onTeacher }: Props) {
         </div>
         <div class="how-item">
           <span aria-hidden="true">🔬</span>
-          <p>Collect {CONFIG.scienceGoal} samples before the mission ends.</p>
+          <p>Collect {CONFIG.scienceGoal} samples before the mission ends. Extra samples earn bonus stars.</p>
         </div>
         <div class="how-item">
           <span aria-hidden="true">⏳</span>
@@ -80,7 +86,7 @@ export function Title({ busy, error, onStart, onSources, onTeacher }: Props) {
             <p class="small">
               Real NASA DONKI records, {r.start} to {r.end}.{r.marsObserved ? ' Also measured at Mars.' : ''}
             </p>
-            <Button kind="primary" disabled={busy} onClick={() => go({ kind: 'replay', id: r.id })}>
+            <Button kind="primary" disabled={busy !== null} onClick={() => go({ kind: 'replay', id: r.id })}>
               ▶ Play this storm
             </Button>
           </article>
@@ -90,7 +96,7 @@ export function Title({ busy, error, onStart, onSources, onTeacher }: Props) {
           <h3>Today's Sun</h3>
           <p>What has the Sun done in the last 10 days? The game asks NASA right now.</p>
           <p class="small">If NASA cannot be reached, the game uses saved data and tells you.</p>
-          <Button kind="primary" disabled={busy} onClick={() => go({ kind: 'live' })}>
+          <Button kind="primary" disabled={busy !== null} onClick={() => go({ kind: 'live' })}>
             ▶ Play today's Sun
           </Button>
         </article>
@@ -99,15 +105,28 @@ export function Title({ busy, error, onStart, onSources, onTeacher }: Props) {
           <h3>Random mission</h3>
           <p>Made-up storms. A new surprise for every seed number.</p>
           <p class="small">Good for practice. Not real data.</p>
-          <Button kind="primary" disabled={busy} onClick={() => go({ kind: 'random' })}>
+          <Button kind="primary" disabled={busy !== null} onClick={() => go({ kind: 'random' })}>
             ▶ Play random
           </Button>
         </article>
       </div>
-      {busy && (
+      {busy === 'saved' && (
         <p class="loading" role="status">
           📡 Getting your mission ready…
         </p>
+      )}
+      {busy === 'live' && (
+        <div class="asking" role="status" aria-live="polite">
+          <div class="asking-box">
+            <p class="asking-title">
+              <span class="asking-dish" aria-hidden="true">📡</span> Asking NASA about the Sun…
+            </p>
+            <p class="small">This takes a few seconds. If NASA does not answer, the game uses saved data and tells you.</p>
+            <Button kind="primary" autoFocus onClick={onCancel}>
+              ✖ Cancel and use saved data
+            </Button>
+          </div>
+        </div>
       )}
 
       <section class="options" aria-label="Mission options">
@@ -128,10 +147,25 @@ export function Title({ busy, error, onStart, onSources, onTeacher }: Props) {
             <Button onClick={() => setSeedText(String(newSeed()))}>🎲 New seed</Button>
           </span>
         </label>
-        <label class="check">
-          <input type="checkbox" checked={tutorial} onChange={(e) => setTutorial((e.target as HTMLInputElement).checked)} />
-          <span>Show me how to play on sol 1</span>
-        </label>
+        <p class="tutorial-note">
+          {!tutorialDone && 'Your first mission starts with a short tutorial. You can skip it.'}
+          {tutorialDone && !replayTutorial && (
+            <>
+              You have seen the tutorial.{' '}
+              <button type="button" class="link-btn" onClick={() => setReplayTutorial(true)}>
+                Replay tutorial
+              </button>
+            </>
+          )}
+          {tutorialDone && replayTutorial && (
+            <>
+              ✓ Your next mission will start with the tutorial.{' '}
+              <button type="button" class="link-btn" onClick={() => setReplayTutorial(false)}>
+                Do not show it
+              </button>
+            </>
+          )}
+        </p>
       </section>
 
       <section class="did-you-know">
